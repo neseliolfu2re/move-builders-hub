@@ -427,6 +427,11 @@
 				<span>•</span>
 				<span id="networkStatus">Network: Normal</span>
 			</div>
+			
+			<div id="transactionInfo" style="margin-top:8px; padding:8px; background:#1a1a1a; border-radius:6px; font-size:11px; color:#8a8a8a; display:none;">
+				<div>💳 <strong>Transaction Required:</strong> Each message requires a small gas fee to prevent spam</div>
+				<div style="margin-top:4px;">🔒 <strong>Secure:</strong> Your wallet will ask for approval before sending</div>
+			</div>
 		</div>
 	</div>
 
@@ -2277,6 +2282,9 @@ public fun multiply(x: u64, y: u64): u64 {
 			// Load messages
 			loadMessages();
 			
+			// Show transaction info
+			document.getElementById('transactionInfo').style.display = 'block';
+			
 			document.getElementById('chatModal').style.display = 'grid';
 		};
 
@@ -2360,8 +2368,8 @@ public fun multiply(x: u64, y: u64): u64 {
 			sendBtn.disabled = true;
 			
 			try {
-				// Simulate transaction
-				await simulateMessageTransaction(content);
+				// Real wallet transaction
+				await sendMessageTransaction(content);
 				
 				// Add message to local storage
 				const newMessage = {
@@ -2396,11 +2404,57 @@ public fun multiply(x: u64, y: u64): u64 {
 			}
 		};
 
+		window.sendMessageTransaction = async function(content) {
+			if (!window.aptos || !walletConnected) {
+				throw new Error('Wallet not connected');
+			}
+			
+			try {
+				// Get current account
+				const account = await window.aptos.account();
+				
+				// Create message transaction payload
+				const transaction = {
+					type: "entry_function_payload",
+					function: "0x1::coin::transfer",
+					arguments: [
+						"0x1::aptos_coin::AptosCoin", // Coin type
+						"0x1", // Recipient (system address for now)
+						Math.floor(gasFee * 100000000) // Convert APT to octas
+					],
+					type_arguments: ["0x1::aptos_coin::AptosCoin"]
+				};
+				
+				// Show transaction details
+				const confirmMessage = `Send message to @${currentChatUser}?\n\nGas Fee: ${gasFee} APT\nMessage: "${content}"\n\nClick OK to approve in wallet.`;
+				
+				if (!confirm(confirmMessage)) {
+					throw new Error('Transaction cancelled by user');
+				}
+				
+				// Sign and submit transaction
+				const pendingTransaction = await window.aptos.signAndSubmitTransaction(transaction);
+				
+				// Wait for transaction to complete
+				const result = await window.aptos.waitForTransactionWithResult(pendingTransaction.hash);
+				
+				if (result.success) {
+					console.log('Message transaction successful:', result);
+					return result;
+				} else {
+					throw new Error('Transaction failed');
+				}
+				
+			} catch (error) {
+				console.error('Wallet transaction error:', error);
+				throw error;
+			}
+		};
+
 		window.simulateMessageTransaction = async function(content) {
-			// Simulate wallet transaction
+			// Fallback simulation for testing
 			return new Promise((resolve, reject) => {
 				setTimeout(() => {
-					// Simulate 90% success rate
 					if (Math.random() > 0.1) {
 						resolve();
 					} else {

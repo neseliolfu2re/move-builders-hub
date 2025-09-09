@@ -400,6 +400,39 @@
 		</div>
 	</div>
 
+	<!-- Activity Feed Modal -->
+	<div id="activityFeedModal" class="modalBack">
+		<div class="modal" style="max-width:700px;">
+			<div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+				<h2>📰 Activity Feed</h2>
+				<a class="linkish" href="#" id="closeActivityFeed">Close ✕</a>
+			</div>
+			
+			<div id="activityFeedContent">
+				<!-- Activity feed content will be loaded here -->
+			</div>
+		</div>
+	</div>
+
+	<!-- Public Profile Modal -->
+	<div id="publicProfileModal" class="modalBack">
+		<div class="modal" style="max-width:600px;">
+			<div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+				<h2 id="publicProfileTitle">👤 Public Profile</h2>
+				<a class="linkish" href="#" id="closePublicProfile">Close ✕</a>
+			</div>
+			
+			<div id="publicProfileContent">
+				<!-- Profile content will be loaded here -->
+			</div>
+			
+			<div style="margin-top:20px; display:flex; gap:12px; justify-content:space-between;">
+				<button class="btn secondary" onclick="shareProfile()">📤 Share Profile</button>
+				<button class="btn" id="followBtn" onclick="toggleFollow()">Follow</button>
+			</div>
+		</div>
+	</div>
+
 	<!-- Create Profile Modal -->
 	<div id="createProfileModal" class="modalBack">
 		<div class="modal" style="max-width:500px;">
@@ -422,6 +455,56 @@
 				
 				<h3 style="margin:16px 0 8px 0;">Bio</h3>
 				<textarea id="bioInput" placeholder="Tell us about yourself..." style="width:100%; height:60px; padding:10px; background:#1a1a1a; border:1px solid #333; border-radius:6px; color:#fff; resize:vertical;"></textarea>
+				
+				<h3 style="margin:16px 0 8px 0;">Email *</h3>
+				<input type="email" id="emailInput" placeholder="your@email.com" style="width:100%; padding:10px; background:#1a1a1a; border:1px solid #333; border-radius:6px; color:#fff;">
+				
+				<h3 style="margin:16px 0 8px 0;">Skills</h3>
+				<div class="skills-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap:8px;">
+					<label class="skill-checkbox" style="display:flex; align-items:center; gap:6px; cursor:pointer; padding:6px; border:1px solid #333; border-radius:6px;">
+						<input type="checkbox" value="Move" style="accent-color:#82ffa1;">
+						<span style="font-size:12px;">Move</span>
+					</label>
+					<label class="skill-checkbox" style="display:flex; align-items:center; gap:6px; cursor:pointer; padding:6px; border:1px solid #333; border-radius:6px;">
+						<input type="checkbox" value="Rust" style="accent-color:#82ffa1;">
+						<span style="font-size:12px;">Rust</span>
+					</label>
+					<label class="skill-checkbox" style="display:flex; align-items:center; gap:6px; cursor:pointer; padding:6px; border:1px solid #333; border-radius:6px;">
+						<input type="checkbox" value="JavaScript" style="accent-color:#82ffa1;">
+						<span style="font-size:12px;">JavaScript</span>
+					</label>
+					<label class="skill-checkbox" style="display:flex; align-items:center; gap:6px; cursor:pointer; padding:6px; border:1px solid #333; border-radius:6px;">
+						<input type="checkbox" value="Python" style="accent-color:#82ffa1;">
+						<span style="font-size:12px;">Python</span>
+					</label>
+					<label class="skill-checkbox" style="display:flex; align-items:center; gap:6px; cursor:pointer; padding:6px; border:1px solid #333; border-radius:6px;">
+						<input type="checkbox" value="Solidity" style="accent-color:#82ffa1;">
+						<span style="font-size:12px;">Solidity</span>
+					</label>
+					<label class="skill-checkbox" style="display:flex; align-items:center; gap:6px; cursor:pointer; padding:6px; border:1px solid #333; border-radius:6px;">
+						<input type="checkbox" value="Web3" style="accent-color:#82ffa1;">
+						<span style="font-size:12px;">Web3</span>
+					</label>
+				</div>
+				
+				<h3 style="margin:16px 0 8px 0;">Experience Level</h3>
+				<select id="experienceInput" style="width:100%; padding:10px; background:#1a1a1a; border:1px solid #333; border-radius:6px; color:#fff;">
+					<option value="beginner">Beginner</option>
+					<option value="intermediate">Intermediate</option>
+					<option value="advanced">Advanced</option>
+				</select>
+				
+				<h3 style="margin:16px 0 8px 0;">Privacy Settings</h3>
+				<div style="display:flex; flex-direction:column; gap:8px;">
+					<label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+						<input type="radio" name="privacy" value="public" checked style="accent-color:#82ffa1;">
+						<span>🌐 Public Profile (Others can see your progress)</span>
+					</label>
+					<label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+						<input type="radio" name="privacy" value="private" style="accent-color:#82ffa1;">
+						<span>🔒 Private Profile (Only you can see your progress)</span>
+					</label>
+				</div>
 			</div>
 			
 			<div style="display:flex; gap:12px; justify-content:flex-end;">
@@ -509,17 +592,42 @@
 						<div style="font-size:24px; font-weight:700; color:#82ffa1;" id="userXP">0</div>
 						<div style="font-size:12px; color:#cfcfcf;">XP Points</div>
 					</div>
+					<div style="text-align:center; padding:12px; border:1px solid #333; border-radius:8px; background:#0f1f0f;">
+						<div style="font-size:24px; font-weight:700; color:#82ffa1;" id="userFollowers">0</div>
+						<div style="font-size:12px; color:#cfcfcf;">Followers</div>
+					</div>
+					<div style="text-align:center; padding:12px; border:1px solid #333; border-radius:8px; background:#0f1f0f;">
+						<div style="font-size:24px; font-weight:700; color:#82ffa1;" id="userFollowing">0</div>
+						<div style="font-size:12px; color:#cfcfcf;">Following</div>
+					</div>
 				</div>
 				
-				<h3>🏆 Your Badges</h3>
+				<!-- Quest Completion History -->
+				<h3>📈 Quest Completion History</h3>
+				<div id="questHistory" style="background:#1a1a1a; border:1px solid #333; border-radius:8px; padding:16px; margin:8px 0;">
+					<div style="display:grid; gap:8px;">
+						<!-- Quest history items will be loaded here -->
+					</div>
+				</div>
+				
+				<!-- Achievement Showcase -->
+				<h3>🏆 Achievement Showcase</h3>
 				<div id="userBadges" class="chips"></div>
 				
-				<h3 style="margin-top:20px;">📈 Recommended Next Steps</h3>
-				<div id="recommendations">
-					<div style="padding:12px; border:1px solid #2a5a2a; border-radius:8px; background:#0f1f0f; margin:8px 0;">
-						<strong>🎯 Complete Quest 1</strong><br>
-						<small>Start with Move basics to build your foundation</small>
+				<!-- Activity Timeline -->
+				<h3>📅 Recent Activity</h3>
+				<div id="activityTimeline" style="background:#1a1a1a; border:1px solid #333; border-radius:8px; padding:16px; margin:8px 0;">
+					<div style="display:grid; gap:12px;">
+						<!-- Activity items will be loaded here -->
 					</div>
+				</div>
+				
+				<!-- Profile Management -->
+				<div style="margin-top:20px; display:flex; gap:12px; justify-content:space-between; flex-wrap:wrap;">
+					<button class="btn secondary" onclick="editProfile()">✏️ Edit Profile</button>
+					<button class="btn secondary" onclick="shareProfile()">📤 Share Profile</button>
+					<button class="btn secondary" onclick="openActivityFeed()">📰 Activity Feed</button>
+					<button class="btn" onclick="viewPublicProfile()">👁️ View Public Profile</button>
 				</div>
 			</div>
 		</div>
@@ -647,7 +755,10 @@ module 0x1::hello_world {
 				<div class="row" style="margin-top:10px; justify-content:space-between;">
 					<span class="badge">Completed: ${p.completed}</span>
 					<span class="badge">Streak: ${p.streak}d</span>
-					<button class="btn" data-profile="${p.id}">View Profile</button>
+				</div>
+				<div class="row" style="margin-top:12px; gap:8px;">
+					<button class="btn" data-profile="${p.id}" style="flex:1;">View Profile</button>
+					<button class="btn secondary" onclick="followUser('${p.handle}')" style="flex:1;">Follow</button>
 				</div>
 			</div>
 		`).join('');
@@ -1031,10 +1142,22 @@ public fun multiply(x: u64, y: u64): u64 {
 		window.saveProfile = function() {
 			const username = document.getElementById('usernameInput').value.trim();
 			const bio = document.getElementById('bioInput').value.trim();
+			const email = document.getElementById('emailInput').value.trim();
+			const experience = document.getElementById('experienceInput').value;
+			const privacy = document.querySelector('input[name="privacy"]:checked').value;
+			
+			// Get selected skills
+			const skillCheckboxes = document.querySelectorAll('.skill-checkbox input[type="checkbox"]:checked');
+			const skills = Array.from(skillCheckboxes).map(cb => cb.value);
 
 			// Security validation
 			if (!username) {
 				alert('Please enter a username!');
+				return;
+			}
+
+			if (!email) {
+				alert('Please enter your email!');
 				return;
 			}
 
@@ -1048,20 +1171,38 @@ public fun multiply(x: u64, y: u64): u64 {
 				return;
 			}
 
+			// Email validation
+			const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+			if (!emailRegex.test(email)) {
+				alert('❌ Please enter a valid email address!');
+				return;
+			}
+
 			userProfile = {
 				avatar: selectedAvatar,
 				username: username,
 				bio: bio || 'Move developer',
+				email: email,
+				skills: skills,
+				experience: experience,
+				privacy: privacy,
 				walletAddress: walletAddress,
 				createdAt: new Date().toISOString(),
 				questsCompleted: 0,
 				streak: 0,
-				badges: ['New Builder']
+				badges: ['New Builder'],
+				followers: [],
+				following: [],
+				profileLink: `https://movebuildershub.xyz/profile/${username.toLowerCase().replace(/[^a-z0-9]/g, '')}`
 			};
 
 			localStorage.setItem(`profile_${walletAddress}`, JSON.stringify(userProfile));
 			closeCreateProfile();
 			updateWalletUI();
+			
+			// Add activity to timeline
+			addActivity('👤', 'Created profile');
+			
 			alert('✅ Profile created successfully!');
 		};
 
@@ -1268,6 +1409,10 @@ public fun multiply(x: u64, y: u64): u64 {
 			};
 			
 			document.getElementById('hackathonModal').style.display = 'none';
+			
+			// Add activity to timeline
+			addActivity('🏆', `Registered for ${hackathons[hackathonType]}`);
+			
 			alert(`🎉 Registered for ${hackathons[hackathonType]}!\n\n✅ Registration confirmed\n📧 Details sent to your email\n💬 Discord invite coming soon`);
 		};
 
@@ -1336,6 +1481,30 @@ public fun multiply(x: u64, y: u64): u64 {
 			document.getElementById('activeDevelopers').textContent = Math.floor(Math.random() * 20) + 120;
 			document.getElementById('completedQuests').textContent = Math.floor(Math.random() * 30) + 80;
 			document.getElementById('onChainTx').textContent = Math.floor(Math.random() * 50) + 140;
+			
+			// Update personal dashboard stats
+			if (userProfile) {
+				document.getElementById('userQuestsCompleted').textContent = userProfile.questsCompleted || 0;
+				document.getElementById('userStreak').textContent = userProfile.streak || 0;
+				document.getElementById('userLevel').textContent = Math.floor((userProfile.questsCompleted || 0) / 3) + 1;
+				document.getElementById('userXP').textContent = (userProfile.questsCompleted || 0) * 100;
+				document.getElementById('userFollowers').textContent = userProfile.followers ? userProfile.followers.length : 0;
+				document.getElementById('userFollowing').textContent = userProfile.following ? userProfile.following.length : 0;
+				
+				// Update badges
+				const badgesContainer = document.getElementById('userBadges');
+				if (badgesContainer && userProfile.badges) {
+					badgesContainer.innerHTML = userProfile.badges.map(badge => 
+						`<span class="badge">${badge}</span>`
+					).join('');
+				}
+				
+				// Load quest history
+				loadQuestHistory();
+				
+				// Load activity timeline
+				loadActivityTimeline();
+			}
 		}
 
 		// Enhanced social sharing function
@@ -1410,6 +1579,12 @@ public fun multiply(x: u64, y: u64): u64 {
 		function completeQuestWithSharing(questId, questTitle) {
 			// Award achievements first
 			awardAchievements(questId);
+			
+			// Add to quest history
+			addQuestToHistory(questTitle, 100);
+			
+			// Add activity to timeline
+			addActivity('🎯', `Completed quest: ${questTitle}`);
 			
 			alert(`🎉 Quest "${questTitle}" completed!\n\n✅ Reward earned\n⛓️ Recorded on-chain`);
 			
@@ -1642,6 +1817,319 @@ public fun multiply(x: u64, y: u64): u64 {
 
 		document.getElementById('connectWallet').addEventListener('click', connectWallet);
 		document.getElementById('disconnectWallet').addEventListener('click', disconnectWallet);
+
+		// New Profile Functions
+		window.loadQuestHistory = function() {
+			if (!userProfile) return;
+			
+			const questHistory = userProfile.questHistory || [];
+			const container = document.getElementById('questHistory');
+			if (!container) return;
+			
+			if (questHistory.length === 0) {
+				container.innerHTML = '<p style="color:#8a8a8a; text-align:center; margin:0;">No quests completed yet. Start your journey!</p>';
+				return;
+			}
+			
+			container.innerHTML = questHistory.map(quest => `
+				<div style="display:flex; justify-content:space-between; align-items:center; padding:8px; border:1px solid #333; border-radius:6px; background:#0f0f0f;">
+					<div>
+						<strong>${quest.title}</strong>
+						<div style="font-size:12px; color:#8a8a8a;">Completed ${new Date(quest.completedAt).toLocaleDateString()}</div>
+					</div>
+					<div style="color:#82ffa1; font-weight:bold;">+${quest.xp || 100} XP</div>
+				</div>
+			`).join('');
+		};
+
+		window.loadActivityTimeline = function() {
+			if (!userProfile) return;
+			
+			const activities = userProfile.activities || [];
+			const container = document.getElementById('activityTimeline');
+			if (!container) return;
+			
+			if (activities.length === 0) {
+				container.innerHTML = '<p style="color:#8a8a8a; text-align:center; margin:0;">No recent activity. Start exploring!</p>';
+				return;
+			}
+			
+			container.innerHTML = activities.slice(0, 10).map(activity => `
+				<div style="display:flex; align-items:center; gap:12px; padding:8px; border:1px solid #333; border-radius:6px; background:#0f0f0f;">
+					<div style="font-size:20px;">${activity.icon}</div>
+					<div style="flex:1;">
+						<div>${activity.description}</div>
+						<div style="font-size:12px; color:#8a8a8a;">${new Date(activity.timestamp).toLocaleString()}</div>
+					</div>
+				</div>
+			`).join('');
+		};
+
+		window.editProfile = function() {
+			if (!userProfile) {
+				alert('Please create a profile first!');
+				return;
+			}
+			
+			// Pre-fill the form with existing data
+			document.getElementById('usernameInput').value = userProfile.username || '';
+			document.getElementById('bioInput').value = userProfile.bio || '';
+			document.getElementById('emailInput').value = userProfile.email || '';
+			document.getElementById('experienceInput').value = userProfile.experience || 'beginner';
+			
+			// Set privacy setting
+			const privacyRadios = document.querySelectorAll('input[name="privacy"]');
+			privacyRadios.forEach(radio => {
+				radio.checked = radio.value === (userProfile.privacy || 'public');
+			});
+			
+			// Set skills
+			const skillCheckboxes = document.querySelectorAll('.skill-checkbox input[type="checkbox"]');
+			skillCheckboxes.forEach(checkbox => {
+				checkbox.checked = userProfile.skills && userProfile.skills.includes(checkbox.value);
+			});
+			
+			// Set avatar
+			if (userProfile.avatar) {
+				selectAvatar(userProfile.avatar);
+			}
+			
+			document.getElementById('createProfileModal').style.display = 'grid';
+		};
+
+		window.viewPublicProfile = function() {
+			if (!userProfile) {
+				alert('Please create a profile first!');
+				return;
+			}
+			
+			if (userProfile.privacy === 'private') {
+				alert('Your profile is set to private. Change privacy settings to make it public.');
+				return;
+			}
+			
+			// Load public profile content
+			const content = document.getElementById('publicProfileContent');
+			content.innerHTML = `
+				<div style="text-align:center; margin-bottom:20px;">
+					<div style="font-size:48px; margin-bottom:8px;">${userProfile.avatar}</div>
+					<h3 style="margin:0;">${userProfile.username}</h3>
+					<p style="color:#8a8a8a; margin:4px 0;">${userProfile.bio}</p>
+					<div style="display:flex; gap:8px; justify-content:center; margin:8px 0;">
+						<span class="badge">${userProfile.experience}</span>
+						${userProfile.skills ? userProfile.skills.map(skill => `<span class="badge">${skill}</span>`).join('') : ''}
+					</div>
+				</div>
+				
+				<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap:12px; margin:16px 0;">
+					<div style="text-align:center; padding:12px; border:1px solid #333; border-radius:8px;">
+						<div style="font-size:20px; font-weight:bold; color:#82ffa1;">${userProfile.questsCompleted || 0}</div>
+						<div style="font-size:12px; color:#8a8a8a;">Quests</div>
+					</div>
+					<div style="text-align:center; padding:12px; border:1px solid #333; border-radius:8px;">
+						<div style="font-size:20px; font-weight:bold; color:#82ffa1;">${userProfile.streak || 0}</div>
+						<div style="font-size:12px; color:#8a8a8a;">Streak</div>
+					</div>
+					<div style="text-align:center; padding:12px; border:1px solid #333; border-radius:8px;">
+						<div style="font-size:20px; font-weight:bold; color:#82ffa1;">${userProfile.followers ? userProfile.followers.length : 0}</div>
+						<div style="font-size:12px; color:#8a8a8a;">Followers</div>
+					</div>
+					<div style="text-align:center; padding:12px; border:1px solid #333; border-radius:8px;">
+						<div style="font-size:20px; font-weight:bold; color:#82ffa1;">${userProfile.following ? userProfile.following.length : 0}</div>
+						<div style="font-size:12px; color:#8a8a8a;">Following</div>
+					</div>
+				</div>
+				
+				<h4>🏆 Achievements</h4>
+				<div class="chips">
+					${userProfile.badges ? userProfile.badges.map(badge => `<span class="badge">${badge}</span>`).join('') : '<span class="badge">New Builder</span>'}
+				</div>
+			`;
+			
+			document.getElementById('publicProfileModal').style.display = 'grid';
+		};
+
+		window.shareProfile = function() {
+			if (!userProfile) {
+				alert('Please create a profile first!');
+				return;
+			}
+			
+			const profileUrl = userProfile.profileLink || `https://movebuildershub.xyz/profile/${userProfile.username}`;
+			const shareText = `👤 Check out my Move Builders Hub profile!\n\n${userProfile.username} - ${userProfile.bio}\n\n🏆 ${userProfile.questsCompleted || 0} quests completed\n🔥 ${userProfile.streak || 0} day streak\n\n🔗 ${profileUrl}\n\n#MoveBuildersHub #Aptos #Web3Education`;
+			
+			if (navigator.share && isMobile()) {
+				navigator.share({
+					title: `${userProfile.username} - Move Builders Hub Profile`,
+					text: shareText,
+					url: profileUrl
+				});
+			} else {
+				navigator.clipboard.writeText(shareText).then(() => {
+					alert('📋 Profile link copied to clipboard!\n\nShare it with your friends!');
+				});
+			}
+		};
+
+		window.toggleFollow = function() {
+			// This would be implemented with backend integration
+			alert('Follow functionality will be available with backend integration!');
+		};
+
+		window.followUser = function(userHandle) {
+			if (!userProfile) {
+				alert('Please create a profile first!');
+				return;
+			}
+			
+			if (!userProfile.following) userProfile.following = [];
+			
+			if (userProfile.following.includes(userHandle)) {
+				// Unfollow
+				userProfile.following = userProfile.following.filter(u => u !== userHandle);
+				addActivity('👥', `Unfollowed @${userHandle}`);
+				alert(`👋 Unfollowed @${userHandle}`);
+			} else {
+				// Follow
+				userProfile.following.push(userHandle);
+				addActivity('👥', `Followed @${userHandle}`);
+				alert(`✅ Following @${userHandle}!\n\nYou'll see their updates in your activity feed.`);
+			}
+			
+			// Save to localStorage
+			localStorage.setItem(`profile_${walletAddress}`, JSON.stringify(userProfile));
+			
+			// Update UI
+			updateStats();
+		};
+
+		// Close public profile modal
+		document.getElementById('closePublicProfile').addEventListener('click', (e) => {
+			e.preventDefault();
+			document.getElementById('publicProfileModal').style.display = 'none';
+		});
+
+		document.getElementById('publicProfileModal').addEventListener('click', (e) => {
+			if (e.target.id === 'publicProfileModal') {
+				document.getElementById('publicProfileModal').style.display = 'none';
+			}
+		});
+
+		// Add activity to timeline
+		window.addActivity = function(icon, description) {
+			if (!userProfile) return;
+			
+			if (!userProfile.activities) userProfile.activities = [];
+			
+			userProfile.activities.unshift({
+				icon: icon,
+				description: description,
+				timestamp: new Date().toISOString()
+			});
+			
+			// Keep only last 50 activities
+			userProfile.activities = userProfile.activities.slice(0, 50);
+			
+			// Save to localStorage
+			localStorage.setItem(`profile_${walletAddress}`, JSON.stringify(userProfile));
+		};
+
+		// Add quest to history
+		window.addQuestToHistory = function(questTitle, xp = 100) {
+			if (!userProfile) return;
+			
+			if (!userProfile.questHistory) userProfile.questHistory = [];
+			
+			userProfile.questHistory.unshift({
+				title: questTitle,
+				completedAt: new Date().toISOString(),
+				xp: xp
+			});
+			
+			// Keep only last 100 quests
+			userProfile.questHistory = userProfile.questHistory.slice(0, 100);
+			
+			// Save to localStorage
+			localStorage.setItem(`profile_${walletAddress}`, JSON.stringify(userProfile));
+		};
+
+		// Activity Feed Functions
+		window.openActivityFeed = function() {
+			if (!userProfile) {
+				alert('Please create a profile first!');
+				return;
+			}
+			
+			loadActivityFeed();
+			document.getElementById('activityFeedModal').style.display = 'grid';
+		};
+
+		window.loadActivityFeed = function() {
+			if (!userProfile) return;
+			
+			const container = document.getElementById('activityFeedContent');
+			if (!container) return;
+			
+			// Get all activities from following users (simulated)
+			const allActivities = userProfile.activities || [];
+			const followingActivities = [];
+			
+			// Simulate activities from followed users
+			if (userProfile.following && userProfile.following.length > 0) {
+				userProfile.following.forEach(userHandle => {
+					// Simulate some activities from followed users
+					followingActivities.push({
+						user: userHandle,
+						icon: '🎯',
+						description: `Completed quest: Move Basics`,
+						timestamp: new Date(Date.now() - Math.random() * 86400000).toISOString()
+					});
+					followingActivities.push({
+						user: userHandle,
+						icon: '🏆',
+						description: `Registered for Move DeFi Challenge`,
+						timestamp: new Date(Date.now() - Math.random() * 172800000).toISOString()
+					});
+				});
+			}
+			
+			// Combine and sort all activities
+			const combinedActivities = [...allActivities, ...followingActivities]
+				.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+				.slice(0, 20);
+			
+			if (combinedActivities.length === 0) {
+				container.innerHTML = '<p style="color:#8a8a8a; text-align:center; margin:20px 0;">No recent activity. Start following other builders!</p>';
+				return;
+			}
+			
+			container.innerHTML = combinedActivities.map(activity => `
+				<div style="display:flex; align-items:center; gap:12px; padding:12px; border:1px solid #333; border-radius:8px; background:#0f0f0f; margin-bottom:8px;">
+					<div style="font-size:24px;">${activity.icon}</div>
+					<div style="flex:1;">
+						<div>
+							${activity.user ? `<strong>@${activity.user}</strong> ` : ''}${activity.description}
+						</div>
+						<div style="font-size:12px; color:#8a8a8a; margin-top:4px;">
+							${new Date(activity.timestamp).toLocaleString()}
+						</div>
+					</div>
+				</div>
+			`).join('');
+		};
+
+		// Close activity feed modal
+		document.getElementById('closeActivityFeed').addEventListener('click', (e) => {
+			e.preventDefault();
+			document.getElementById('activityFeedModal').style.display = 'none';
+		});
+
+		document.getElementById('activityFeedModal').addEventListener('click', (e) => {
+			if (e.target.id === 'activityFeedModal') {
+				document.getElementById('activityFeedModal').style.display = 'none';
+			}
+		});
+
 	})();
 	</script>
 </body>

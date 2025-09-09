@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Move Builders Hub • Test</title>
+	<style>
+		body { background: #000; color: #fff; font-family: Arial; text-align: center; padding: 50px; }
+		.btn { padding: 12px 20px; background: #82ffa1; color: #000; border: none; border-radius: 8px; cursor: pointer; margin: 10px; }
+	</style>
+</head>
+<body>
+	<h1>🧪 Move Builders Hub - Test</h1>
+	
+	<button class="btn" id="testConnect">Test Connect Wallet</button>
+	<button class="btn" id="testQuests">Test Explore Quests</button>
+	
+	<div id="result"></div>
+	
+	<script>
+		document.getElementById('testConnect').addEventListener('click', () => {
+			document.getElementById('result').innerHTML = '✅ Connect button works!';
+		});
+		
+		document.getElementById('testQuests').addEventListener('click', () => {
+			document.getElementById('result').innerHTML = '✅ Quest button works!';
+		});
+		
+		console.log('✅ Test script loaded successfully');
+	</script>
+</body>
+</html>

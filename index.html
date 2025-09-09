@@ -494,6 +494,22 @@
 					<option value="advanced">Advanced</option>
 				</select>
 				
+				<h3 style="margin:16px 0 8px 0;">Social Links (Optional)</h3>
+				<div style="display:grid; gap:12px;">
+					<div>
+						<label style="display:block; margin-bottom:4px; font-size:14px; color:#cfcfcf;">🐦 X (Twitter) Handle</label>
+						<input type="text" id="twitterInput" placeholder="@username" style="width:100%; padding:10px; background:#1a1a1a; border:1px solid #333; border-radius:6px; color:#fff;">
+					</div>
+					<div>
+						<label style="display:block; margin-bottom:4px; font-size:14px; color:#cfcfcf;">💻 GitHub Username</label>
+						<input type="text" id="githubInput" placeholder="username" style="width:100%; padding:10px; background:#1a1a1a; border:1px solid #333; border-radius:6px; color:#fff;">
+					</div>
+					<div>
+						<label style="display:block; margin-bottom:4px; font-size:14px; color:#cfcfcf;">💼 LinkedIn (Optional)</label>
+						<input type="text" id="linkedinInput" placeholder="linkedin.com/in/username" style="width:100%; padding:10px; background:#1a1a1a; border:1px solid #333; border-radius:6px; color:#fff;">
+					</div>
+				</div>
+				
 				<h3 style="margin:16px 0 8px 0;">Privacy Settings</h3>
 				<div style="display:flex; flex-direction:column; gap:8px;">
 					<label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
@@ -752,6 +768,14 @@ module 0x1::hello_world {
 				<div class="chips">
 					${p.skills.map(s => `<span class=\"chip\">${s}</span>`).join('')}
 				</div>
+				${p.links && p.links.length > 0 ? `
+					<div style="display:flex; gap:8px; justify-content:center; margin:8px 0;">
+						${p.links.map(link => {
+							const icon = link.t === 'GitHub' ? '💻' : link.t === 'X' ? '🐦' : link.t === 'LinkedIn' ? '💼' : '🔗';
+							return `<a href="${link.u}" target="_blank" style="color:#82ffa1; text-decoration:none; font-size:16px;" title="${link.t}">${icon}</a>`;
+						}).join('')}
+					</div>
+				` : ''}
 				<div class="row" style="margin-top:10px; justify-content:space-between;">
 					<span class="badge">Completed: ${p.completed}</span>
 					<span class="badge">Streak: ${p.streak}d</span>
@@ -1145,6 +1169,9 @@ public fun multiply(x: u64, y: u64): u64 {
 			const email = document.getElementById('emailInput').value.trim();
 			const experience = document.getElementById('experienceInput').value;
 			const privacy = document.querySelector('input[name="privacy"]:checked').value;
+			const twitter = document.getElementById('twitterInput').value.trim();
+			const github = document.getElementById('githubInput').value.trim();
+			const linkedin = document.getElementById('linkedinInput').value.trim();
 			
 			// Get selected skills
 			const skillCheckboxes = document.querySelectorAll('.skill-checkbox input[type="checkbox"]:checked');
@@ -1178,6 +1205,32 @@ public fun multiply(x: u64, y: u64): u64 {
 				return;
 			}
 
+			// Social links validation (optional)
+			const socialLinks = {};
+			if (twitter) {
+				if (!twitter.startsWith('@')) {
+					alert('❌ Twitter handle should start with @ (e.g., @username)');
+					return;
+				}
+				socialLinks.twitter = twitter;
+			}
+			if (github) {
+				// Basic GitHub username validation
+				if (!/^[a-zA-Z0-9]([a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$/.test(github)) {
+					alert('❌ Please enter a valid GitHub username');
+					return;
+				}
+				socialLinks.github = github;
+			}
+			if (linkedin) {
+				// Basic LinkedIn URL validation
+				if (!linkedin.includes('linkedin.com/in/')) {
+					alert('❌ Please enter a valid LinkedIn URL (e.g., linkedin.com/in/username)');
+					return;
+				}
+				socialLinks.linkedin = linkedin;
+			}
+
 			userProfile = {
 				avatar: selectedAvatar,
 				username: username,
@@ -1186,6 +1239,7 @@ public fun multiply(x: u64, y: u64): u64 {
 				skills: skills,
 				experience: experience,
 				privacy: privacy,
+				socialLinks: socialLinks,
 				walletAddress: walletAddress,
 				createdAt: new Date().toISOString(),
 				questsCompleted: 0,
@@ -1877,6 +1931,11 @@ public fun multiply(x: u64, y: u64): u64 {
 			document.getElementById('emailInput').value = userProfile.email || '';
 			document.getElementById('experienceInput').value = userProfile.experience || 'beginner';
 			
+			// Pre-fill social links
+			document.getElementById('twitterInput').value = userProfile.socialLinks?.twitter || '';
+			document.getElementById('githubInput').value = userProfile.socialLinks?.github || '';
+			document.getElementById('linkedinInput').value = userProfile.socialLinks?.linkedin || '';
+			
 			// Set privacy setting
 			const privacyRadios = document.querySelectorAll('input[name="privacy"]');
 			privacyRadios.forEach(radio => {
@@ -1919,6 +1978,13 @@ public fun multiply(x: u64, y: u64): u64 {
 						<span class="badge">${userProfile.experience}</span>
 						${userProfile.skills ? userProfile.skills.map(skill => `<span class="badge">${skill}</span>`).join('') : ''}
 					</div>
+					${userProfile.socialLinks && Object.keys(userProfile.socialLinks).length > 0 ? `
+						<div style="display:flex; gap:12px; justify-content:center; margin:12px 0;">
+							${userProfile.socialLinks.twitter ? `<a href="https://twitter.com/${userProfile.socialLinks.twitter.replace('@', '')}" target="_blank" style="color:#82ffa1; text-decoration:none; font-size:20px;" title="X (Twitter)">🐦</a>` : ''}
+							${userProfile.socialLinks.github ? `<a href="https://github.com/${userProfile.socialLinks.github}" target="_blank" style="color:#82ffa1; text-decoration:none; font-size:20px;" title="GitHub">💻</a>` : ''}
+							${userProfile.socialLinks.linkedin ? `<a href="https://${userProfile.socialLinks.linkedin}" target="_blank" style="color:#82ffa1; text-decoration:none; font-size:20px;" title="LinkedIn">💼</a>` : ''}
+						</div>
+					` : ''}
 				</div>
 				
 				<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap:12px; margin:16px 0;">

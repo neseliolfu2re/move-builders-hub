@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🏗️ Move Builders Hub
 
 **On-Chain Move Learning Platform**
@@ -197,3 +198,7 @@ MIT License - See LICENSE file for details
 ---
 
 **Built with ❤️ for the Move ecosystem**
+=======
+# move-builders-hub
+On-Chain Move Learning Platform
+>>>>>>> 2de0933124e7cca8bec46f10670efa2be56fa890

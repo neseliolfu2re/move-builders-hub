@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Move Builders Hub • On-Chain Move Learning</title>
+	<meta name="color-scheme" content="dark light" />
+	<style>
+		:root { color-scheme: dark; }
+		html, body { height: 100%; }
+		* { box-sizing: border-box; }
+		body {
+			margin: 0;
+			font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+			background: #000;
+			color: #fff;
+		}
+		.container { width: min(1200px, 92vw); margin: 0 auto; padding: 20px; }
+		.header { display: grid; gap: 12px; text-align: center; padding: 40px 0 24px; }
+		h1 { font-size: clamp(28px, 4vw, 40px); margin: 0; }
+		.subtitle { color: #bdbdbd; margin: 0 auto; max-width: 800px; }
+		.badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
+		.badge { padding: 6px 12px; border-radius: 999px; border: 1px solid #2a2a2a; background:#0f0f0f; font-size: 12px; color:#e5e5e5; }
+		.ctaRow { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top: 14px; }
+		.btn { appearance:none; border:1px solid #fff; background:#fff; color:#000; padding:12px 16px; border-radius:10px; font-weight:600; cursor:pointer; }
+		.btn.secondary { background:transparent; color:#fff; border-color:#fff; }
+		.note { color:#ffd788; font-size: 12px; margin-top: 6px; }
+		.divider { height:1px; background:#1f1f1f; margin: 24px 0; }
+
+		.grid { display:grid; gap:16px; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); }
+		.card { background:#0f0f0f; border:1px solid #222; border-radius:14px; padding:18px; }
+		.card h3 { margin:0 0 8px 0; font-size:18px; }
+		.card p { margin:0; color:#cfcfcf; line-height:1.5; }
+
+		.sectionTitle { font-size:20px; margin: 0 0 12px 0; }
+		.row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+		.kpi { text-align:center; padding:14px; border:1px solid #222; border-radius:12px; background:#0f0f0f; }
+		.kpi .num { font-size:20px; font-weight:700; }
+		.kpi .lbl { color:#bdbdbd; font-size:12px; }
+
+		.footer { text-align:center; color:#8a8a8a; font-size:12px; padding: 24px 0 40px; }
+
+		/* Modal */
+		.modalBack { position:fixed; inset:0; background:rgba(0,0,0,.8); display:none; place-items:center; z-index:1000; }
+		.modal { width:min(860px,94vw); max-height:80vh; overflow:auto; background:#0f0f0f; border:1px solid #2a2a2a; border-radius:16px; padding:20px; }
+		.modal h2 { margin:0 0 10px 0; font-size:20px; }
+		.modal .qgrid { display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); margin-top: 8px; }
+		.qcard { border:1px solid #222; border-radius:12px; padding:12px; background:#111; }
+		.qtop { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+		.qdiff { font-size:12px; padding:4px 8px; border:1px solid #333; border-radius:999px; color:#e5e5e5; }
+		.qdesc { color:#cfcfcf; font-size:14px; margin:10px 0; line-height:1.5; }
+		.qrow { display:flex; align-items:center; justify-content:space-between; }
+		.qreward { color:#82ffa1; font-weight:700; }
+		.linkish { color:#fff; text-decoration:none; }
+
+		/* Profile chips */
+		.chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+		.chip { font-size:12px; padding:4px 8px; border:1px solid #333; border-radius:999px; color:#e5e5e5; }
+
+		/* Force 3-3 layout on desktop and center */
+		@media (min-width: 900px) {
+			.grid { grid-template-columns: repeat(3, 1fr); justify-items: stretch; }
+		}
+	</style>
+</head>
+<body>
+	<header class="container header">
+		<h1>Move Builders Hub • On-Chain Move Learning</h1>
+		<p class="subtitle">A collaboration-first platform that tracks Move learning on-chain with quests, mentorship, collaboration sessions, sponsor rewards, and analytics.</p>
+		<div class="badges">
+			<span class="badge">Aptos Testnet</span>
+			<span class="badge">Move Language</span>
+			<span class="badge">On-Chain Proof</span>
+			<span class="badge">Mentorship</span>
+			<span class="badge">Collaboration</span>
+			<span class="badge">Sponsors & Rewards</span>
+		</div>
+		<div class="ctaRow">
+			<button class="btn" id="exploreQuests">Explore Quests</button>
+			<button class="btn secondary" id="viewStats">View Analytics</button>
+		</div>
+		<p class="note">Wallet connect will be added once an HTTPS domain is live.</p>
+	</header>
+
+	<main class="container">
+		<section>
+			<h2 class="sectionTitle">Highlights</h2>
+			<div class="grid">
+				<div class="card">
+					<h3>🎯 Quest System</h3>
+					<p>Practice with leveled Move quests and record progress on-chain.</p>
+				</div>
+				<div class="card">
+					<h3>👥 Mentorship</h3>
+					<p>Match with experienced Move devs, schedule 1:1 sessions, grow faster.</p>
+				</div>
+				<div class="card">
+					<h3>🤝 Collaboration</h3>
+					<p>Pair-program and join mini-hackathons to solve real problems together.</p>
+				</div>
+				<div class="card">
+					<h3>🏆 Rewards & Sponsors</h3>
+					<p>Complete sponsor quests and earn rewards. Sustainable, tokenless model.</p>
+				</div>
+				<div class="card">
+					<h3>📊 Analytics</h3>
+					<p>DAU, quest completion rate, and average difficulty over time.</p>
+				</div>
+				<div class="card">
+					<h3>🔐 On-Chain Proof</h3>
+					<p>Your achievements are publicly verifiable on-chain.</p>
+				</div>
+			</div>
+		</section>
+
+		<div class="divider"></div>
+
+		<section>
+			<h2 class="sectionTitle">Builder Profiles</h2>
+			<div class="grid" id="profilesGrid"></div>
+		</section>
+
+		<div class="divider"></div>
+
+		<section>
+			<h2 class="sectionTitle">Quick KPIs (sample)</h2>
+			<div class="grid">
+				<div class="kpi"><div class="num">100+</div><div class="lbl">Active Developers</div></div>
+				<div class="kpi"><div class="num">50+</div><div class="lbl">Completed Quests</div></div>
+				<div class="kpi"><div class="num">24/7</div><div class="lbl">Community Support</div></div>
+			</div>
+		</section>
+
+		<div class="divider"></div>
+
+		<section>
+			<h2 class="sectionTitle">Mentorship & Collaboration</h2>
+			<div class="grid">
+				<div class="card">
+					<h3>Schedule Mentorship</h3>
+					<p>Create your profile and goals, match with mentors via calendar.</p>
+				</div>
+				<div class="card">
+					<h3>Pair Programming</h3>
+					<p>Team up on specific quests, exchange knowledge and code together.</p>
+				</div>
+				<div class="card">
+					<h3>Mini-Hackathons</h3>
+					<p>Sponsor-supported, time-boxed events for focused building.</p>
+				</div>
+			</div>
+		</section>
+
+		<div class="divider"></div>
+
+		<section>
+			<h2 class="sectionTitle">Rewards & Sponsors</h2>
+			<div class="grid">
+				<div class="card">
+					<h3>Sponsor Pools</h3>
+					<p>Sponsors open themed pools; complete quests and earn points.</p>
+				</div>
+				<div class="card">
+					<h3>Fair Evaluation</h3>
+					<p>Collaboration over competition. No exploit-chasing mechanics.</p>
+				</div>
+				<div class="card">
+					<h3>Transparency</h3>
+					<p>On-chain records make progress and rewards verifiable.</p>
+				</div>
+			</div>
+		</section>
+	</main>
+
+	<footer class="footer container">
+		Move Builders Hub • Aptos Testnet • © 2025
+	</footer>
+
+	<!-- Quests Modal -->
+	<div id="questsModal" class="modalBack">
+		<div class="modal">
+			<div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+				<h2>🚀 Available Move Quests</h2>
+				<a class="linkish" href="#" id="closeModal">Close ✕</a>
+			</div>
+			<p class="subtitle">These quests will interact on-chain once HTTPS domain is active. For now, this is a catalog view.</p>
+			<div class="qgrid" id="qgrid"></div>
+		</div>
+	</div>
+
+	<!-- Profile Modal -->
+	<div id="profileModal" class="modalBack">
+		<div class="modal">
+			<div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+				<h2 id="pm_name">Builder Profile</h2>
+				<a class="linkish" href="#" id="pm_close">Close ✕</a>
+			</div>
+			<p id="pm_bio" class="subtitle"></p>
+			<div class="chips" id="pm_skills"></div>
+			<div class="row" style="margin-top:10px">
+				<span id="pm_avail" class="badge"></span>
+				<span id="pm_tz" class="badge"></span>
+			</div>
+			<div style="margin-top:12px" id="pm_links" class="row"></div>
+			<div class="divider"></div>
+			<div class="row" style="gap:16px">
+				<div class="kpi"><div class="num" id="pm_completed">0</div><div class="lbl">Completed</div></div>
+				<div class="kpi"><div class="num" id="pm_streak">0</div><div class="lbl">Streak (days)</div></div>
+			</div>
+			<div style="margin-top:12px">
+				<h3 style="margin:0 0 8px 0; font-size:16px">Badges</h3>
+				<div class="chips" id="pm_badges"></div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+	(function(){
+		// Quests catalog
+		const quests = [
+			{ id:1, title:'🎯 Basic Move Syntax', diff:'Beginner', reward:'10 APT', desc:'Move basics: variables, functions, types.' },
+			{ id:2, title:'🔧 Struct & Functions', diff:'Intermediate', reward:'20 APT', desc:'Structs, public functions, and modular design.' },
+			{ id:3, title:'💰 Resource Model', diff:'Advanced', reward:'40 APT', desc:'Resource safety, abilities, and ownership model.' },
+			{ id:4, title:'🔄 Control Flow', diff:'Beginner', reward:'12 APT', desc:'Conditionals, loops, and patterns.' },
+			{ id:5, title:'📦 Modules', diff:'Intermediate', reward:'25 APT', desc:'Module design, visibility, dependencies.' },
+			{ id:6, title:'🛡️ Security', diff:'Advanced', reward:'50 APT', desc:'Security best practices, testing, and reviews.' }
+		];
+
+		// Builder profiles (now with completed, streak, badges)
+		const profiles = [
+			{ id:1, name:'Aylin Kaya', handle:'@aylin', bio:'Focused on Move security & audits.', skills:['Move','Aptos','Security','Testing'], tz:'GMT+3', avail:'Mentor: Available', completed: 32, streak: 14, badges:['Security Champ','Reviewer','100 Commits'], links:[{t:'GitHub',u:'https://github.com/'},{t:'X',u:'https://x.com/'}] },
+			{ id:2, name:'Deniz Arda', handle:'@deniz', bio:'Tooling and developer experience.', skills:['Move','Tooling','DX','CLI'], tz:'GMT+1', avail:'Mentor: Busy', completed: 20, streak: 5, badges:['DX Builder','CLI Wizard'], links:[{t:'GitHub',u:'https://github.com/'},{t:'Site',u:'#'}] },
+			{ id:3, name:'Efe Can', handle:'@efecan', bio:'Quests and education content.', skills:['Move','Education','Docs'], tz:'GMT+2', avail:'Mentor: Available', completed: 18, streak: 9, badges:['Educator','Quest Maker'], links:[{t:'GitHub',u:'https://github.com/'}] },
+			{ id:4, name:'Mira Y.', handle:'@miray', bio:'Smart contract patterns & modules.', skills:['Modules','Patterns','Reviews'], tz:'GMT+0', avail:'Mentor: Available', completed: 27, streak: 21, badges:['Module Master'], links:[{t:'GitHub',u:'https://github.com/'}] },
+			{ id:5, name:'Okan T.', handle:'@okant', bio:'Collaboration & hackathon facilitator.', skills:['Collab','Hackathons','PM'], tz:'GMT+3', avail:'Mentor: Busy', completed: 14, streak: 3, badges:['Facilitator'], links:[{t:'GitHub',u:'https://github.com/'}] },
+			{ id:6, name:'Selin A.', handle:'@selina', bio:'Analytics and platform metrics.', skills:['Analytics','Metrics','Dashboards'], tz:'GMT-1', avail:'Mentor: Available', completed: 22, streak: 12, badges:['Insights Pro'], links:[{t:'GitHub',u:'https://github.com/'}] }
+		];
+
+		// Elements
+		const exploreBtn = document.getElementById('exploreQuests');
+		const modal = document.getElementById('questsModal');
+		const closeModal = document.getElementById('closeModal');
+		const grid = document.getElementById('qgrid');
+
+		const profilesGrid = document.getElementById('profilesGrid');
+		const pModal = document.getElementById('profileModal');
+		const pmClose = document.getElementById('pm_close');
+		const pmName = document.getElementById('pm_name');
+		const pmBio = document.getElementById('pm_bio');
+		const pmSkills = document.getElementById('pm_skills');
+		const pmAvail = document.getElementById('pm_avail');
+		const pmTz = document.getElementById('pm_tz');
+		const pmLinks = document.getElementById('pm_links');
+		const pmCompleted = document.getElementById('pm_completed');
+		const pmStreak = document.getElementById('pm_streak');
+		const pmBadges = document.getElementById('pm_badges');
+
+		// Render profiles (3-3 grid), include quick summary
+		profilesGrid.innerHTML = profiles.map(p => `
+			<div class="card">
+				<h3>${p.name} <span style="color:#bdbdbd; font-weight:400">${p.handle}</span></h3>
+				<p>${p.bio}</p>
+				<div class="chips">
+					${p.skills.map(s => `<span class=\"chip\">${s}</span>`).join('')}
+				</div>
+				<div class="row" style="margin-top:10px; justify-content:space-between;">
+					<span class="badge">Completed: ${p.completed}</span>
+					<span class="badge">Streak: ${p.streak}d</span>
+					<button class="btn" data-profile="${p.id}">View Profile</button>
+				</div>
+			</div>
+		`).join('');
+
+		profilesGrid.addEventListener('click', (e) => {
+			const t = e.target;
+			if (t && t instanceof Element && t.getAttribute('data-profile')) {
+				const id = Number(t.getAttribute('data-profile'));
+				const p = profiles.find(x => x.id === id);
+				if (!p) return;
+				pmName.textContent = p.name + ' ' + p.handle;
+				pmBio.textContent = p.bio;
+				pmSkills.innerHTML = p.skills.map(s => `<span class=\"chip\">${s}</span>`).join('');
+				pmAvail.textContent = p.avail;
+				pmTz.textContent = p.tz;
+				pmLinks.innerHTML = p.links.map(l => `<a class=\"linkish\" href=\"${l.u}\" target=\"_blank\">${l.t}</a>`).join(' · ');
+				pmCompleted.textContent = String(p.completed);
+				pmStreak.textContent = String(p.streak);
+				pmBadges.innerHTML = (p.badges || []).map(b => `<span class=\"chip\">${b}</span>`).join('');
+				pModal.style.display = 'grid';
+			}
+		});
+
+		pmClose.addEventListener('click', (e) => { e.preventDefault(); pModal.style.display='none'; });
+		pModal.addEventListener('click', (e) => { if (e.target === pModal) pModal.style.display='none'; });
+
+		// Quests modal
+		exploreBtn.addEventListener('click', () => {
+			grid.innerHTML = quests.map(q => `
+				<div class=\"qcard\">
+					<div class=\"qtop\">
+						<h3 style=\"margin:0; font-size:16px\">${q.title}</h3>
+						<span class=\"qdiff\">${q.diff}</span>
+					</div>
+					<p class=\"qdesc\">${q.desc}</p>
+					<div class=\"qrow\">
+						<span class=\"qreward\">Reward: ${q.reward}</span>
+						<button class=\"btn\" onclick=\"alert('Will start when HTTPS domain is active: Quest ${q.id}')\">Start</button>
+					</div>
+				</div>
+			`).join('');
+			modal.style.display = 'grid';
+		});
+
+		closeModal.addEventListener('click', (e) => { e.preventDefault(); modal.style.display='none'; });
+		modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display='none'; });
+
+		document.getElementById('viewStats').addEventListener('click', () => {
+			alert('Analytics: DAU, quest completion rate, avg difficulty. (Will load from on-chain once HTTPS is enabled)');
+		});
+	})();
+	</script>
+</body>
+</html>

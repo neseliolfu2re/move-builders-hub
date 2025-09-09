@@ -400,6 +400,44 @@
 		</div>
 	</div>
 
+	<!-- Live Quest Progress Modal -->
+	<div id="questProgressModal" class="modalBack">
+		<div class="modal" style="max-width:800px;">
+			<div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+				<h2>📊 Live Quest Progress</h2>
+				<a class="linkish" href="#" id="closeQuestProgress">Close ✕</a>
+			</div>
+			
+			<div style="display:flex; gap:12px; margin:16px 0;">
+				<button class="btn secondary" onclick="refreshQuestProgress()" id="refreshQuestProgressBtn">🔄 Refresh</button>
+				<button class="btn secondary" onclick="toggleQuestProgressAutoRefresh()" id="questProgressAutoRefreshBtn">⏰ Auto Refresh: OFF</button>
+			</div>
+			
+			<div id="questProgressContent">
+				<!-- Quest progress content will be loaded here -->
+			</div>
+		</div>
+	</div>
+
+	<!-- Live Leaderboard Modal -->
+	<div id="leaderboardModal" class="modalBack">
+		<div class="modal" style="max-width:700px;">
+			<div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+				<h2>🏆 Live Leaderboard</h2>
+				<a class="linkish" href="#" id="closeLeaderboard">Close ✕</a>
+			</div>
+			
+			<div style="display:flex; gap:12px; margin:16px 0;">
+				<button class="btn secondary" onclick="refreshLeaderboard()" id="refreshLeaderboardBtn">🔄 Refresh</button>
+				<button class="btn secondary" onclick="toggleAutoRefresh()" id="autoRefreshBtn">⏰ Auto Refresh: OFF</button>
+			</div>
+			
+			<div id="leaderboardContent">
+				<!-- Leaderboard content will be loaded here -->
+			</div>
+		</div>
+	</div>
+
 	<!-- Activity Feed Modal -->
 	<div id="activityFeedModal" class="modalBack">
 		<div class="modal" style="max-width:700px;">
@@ -643,6 +681,8 @@
 					<button class="btn secondary" onclick="editProfile()">✏️ Edit Profile</button>
 					<button class="btn secondary" onclick="shareProfile()">📤 Share Profile</button>
 					<button class="btn secondary" onclick="openActivityFeed()">📰 Activity Feed</button>
+					<button class="btn secondary" onclick="openQuestProgress()">📊 Quest Progress</button>
+					<button class="btn secondary" onclick="toggleDashboardAutoRefresh()" id="dashboardAutoRefreshBtn">🔄 Auto Refresh: OFF</button>
 					<button class="btn" onclick="viewPublicProfile()">👁️ View Public Profile</button>
 				</div>
 			</div>
@@ -818,9 +858,22 @@ module 0x1::hello_world {
 						<span class=\"qdiff\">${q.diff}</span>
 					</div>
 					<p class=\"qdesc\">${q.desc}</p>
-					<div class=\"qrow\">
+					<div class=\"qrow\" style=\"margin-bottom:8px;\">
 						<span class=\"qreward\">Reward: ${q.reward}</span>
-						<button class=\"btn\" onclick=\"startQuest(${q.id})\">${walletConnected ? 'Start Quest' : 'Connect Wallet'}</button>
+						<div style=\"display:flex; gap:4px; align-items:center;\">
+							<button class=\"btn secondary\" onclick=\"likeQuest(${q.id}, '❤️')\" style=\"padding:4px 8px; font-size:12px;\">
+								❤️ <span id=\"likes-${q.id}\">${q.likes || 0}</span>
+							</button>
+							<button class=\"btn secondary\" onclick=\"likeQuest(${q.id}, '🔥')\" style=\"padding:4px 8px; font-size:12px;\">
+								🔥 <span id=\"fire-${q.id}\">${q.fire || 0}</span>
+							</button>
+							<button class=\"btn secondary\" onclick=\"likeQuest(${q.id}, '🚀')\" style=\"padding:4px 8px; font-size:12px;\">
+								🚀 <span id=\"rocket-${q.id}\">${q.rocket || 0}</span>
+							</button>
+						</div>
+					</div>
+					<div class=\"qrow\">
+						<button class=\"btn\" onclick=\"startQuest(${q.id})\" style=\"width:100%;\">${walletConnected ? 'Start Quest' : 'Connect Wallet'}</button>
 					</div>
 				</div>
 			`).join('');
@@ -1475,7 +1528,8 @@ public fun multiply(x: u64, y: u64): u64 {
 		});
 
 		document.getElementById('leaderboardBtn').addEventListener('click', () => {
-			alert('🏆 Current Leaderboard:\n\n1. @nese - 35 quests • 1.4 APT\n2. @dilek - 29 quests • 1.1 APT\n3. @selina - 22 quests • 0.7 APT\n4. @deniz - 20 quests • 0.6 APT\n5. @efecan - 18 quests • 0.5 APT');
+			loadLeaderboard();
+			document.getElementById('leaderboardModal').style.display = 'grid';
 		});
 
 		document.getElementById('verifyRewards').addEventListener('click', () => {
@@ -1530,11 +1584,46 @@ public fun multiply(x: u64, y: u64): u64 {
 			});
 		}
 
+		// Animate number changes
+		function animateNumber(elementId, targetValue) {
+			const element = document.getElementById(elementId);
+			if (!element) return;
+			
+			const currentValue = parseInt(element.textContent) || 0;
+			const difference = targetValue - currentValue;
+			const steps = 10;
+			const stepValue = difference / steps;
+			let currentStep = 0;
+			
+			const interval = setInterval(() => {
+				currentStep++;
+				const newValue = Math.round(currentValue + (stepValue * currentStep));
+				element.textContent = newValue;
+				
+				// Add a subtle glow effect
+				element.style.textShadow = '0 0 10px #82ffa1';
+				setTimeout(() => {
+					element.style.textShadow = 'none';
+				}, 200);
+				
+				if (currentStep >= steps) {
+					clearInterval(interval);
+					element.textContent = targetValue;
+				}
+			}, 50);
+		}
+
 		// Update stats periodically
 		function updateStats() {
-			document.getElementById('activeDevelopers').textContent = Math.floor(Math.random() * 20) + 120;
-			document.getElementById('completedQuests').textContent = Math.floor(Math.random() * 30) + 80;
-			document.getElementById('onChainTx').textContent = Math.floor(Math.random() * 50) + 140;
+			// Add some randomness to make it feel live
+			const activeDevs = Math.floor(Math.random() * 20) + 120;
+			const completedQuests = Math.floor(Math.random() * 30) + 80;
+			const onChainTx = Math.floor(Math.random() * 50) + 140;
+			
+			// Animate the numbers
+			animateNumber('activeDevelopers', activeDevs);
+			animateNumber('completedQuests', completedQuests);
+			animateNumber('onChainTx', onChainTx);
 			
 			// Update personal dashboard stats
 			if (userProfile) {
@@ -2130,6 +2219,12 @@ public fun multiply(x: u64, y: u64): u64 {
 			document.getElementById('activityFeedModal').style.display = 'grid';
 		};
 
+		// Quest Progress Functions
+		window.openQuestProgress = function() {
+			loadQuestProgress();
+			document.getElementById('questProgressModal').style.display = 'grid';
+		};
+
 		window.loadActivityFeed = function() {
 			if (!userProfile) return;
 			
@@ -2195,6 +2290,266 @@ public fun multiply(x: u64, y: u64): u64 {
 				document.getElementById('activityFeedModal').style.display = 'none';
 			}
 		});
+
+		// Live Leaderboard Functions
+		let autoRefreshInterval = null;
+		let autoRefreshEnabled = false;
+		let dashboardAutoRefreshInterval = null;
+		let dashboardAutoRefreshEnabled = false;
+		let questProgressAutoRefreshInterval = null;
+		let questProgressAutoRefreshEnabled = false;
+
+		window.loadLeaderboard = function() {
+			const container = document.getElementById('leaderboardContent');
+			if (!container) return;
+			
+			// Simulate live leaderboard data with some randomness
+			const leaderboardData = [
+				{ rank: 1, username: '@nese', quests: 35 + Math.floor(Math.random() * 3), apt: 1.4 + (Math.random() * 0.2).toFixed(1), change: Math.random() > 0.5 ? '↗️' : '→' },
+				{ rank: 2, username: '@dilek', quests: 29 + Math.floor(Math.random() * 3), apt: 1.1 + (Math.random() * 0.2).toFixed(1), change: Math.random() > 0.5 ? '↗️' : '→' },
+				{ rank: 3, username: '@selina', quests: 22 + Math.floor(Math.random() * 3), apt: 0.7 + (Math.random() * 0.2).toFixed(1), change: Math.random() > 0.5 ? '↗️' : '→' },
+				{ rank: 4, username: '@deniz', quests: 20 + Math.floor(Math.random() * 3), apt: 0.6 + (Math.random() * 0.2).toFixed(1), change: Math.random() > 0.5 ? '↗️' : '→' },
+				{ rank: 5, username: '@efecan', quests: 18 + Math.floor(Math.random() * 3), apt: 0.5 + (Math.random() * 0.2).toFixed(1), change: Math.random() > 0.5 ? '↗️' : '→' },
+				{ rank: 6, username: '@okant', quests: 14 + Math.floor(Math.random() * 3), apt: 0.4 + (Math.random() * 0.2).toFixed(1), change: Math.random() > 0.5 ? '↗️' : '→' },
+				{ rank: 7, username: '@newuser1', quests: 12 + Math.floor(Math.random() * 3), apt: 0.3 + (Math.random() * 0.2).toFixed(1), change: Math.random() > 0.5 ? '↗️' : '→' },
+				{ rank: 8, username: '@newuser2', quests: 10 + Math.floor(Math.random() * 3), apt: 0.2 + (Math.random() * 0.2).toFixed(1), change: Math.random() > 0.5 ? '↗️' : '→' }
+			];
+			
+			container.innerHTML = `
+				<div style="background:#1a1a1a; border:1px solid #333; border-radius:8px; padding:16px;">
+					<div style="display:grid; gap:8px;">
+						${leaderboardData.map(user => `
+							<div style="display:flex; align-items:center; gap:12px; padding:12px; border:1px solid #333; border-radius:6px; background:#0f0f0f; transition: all 0.3s ease;">
+								<div style="font-size:20px; font-weight:bold; color:#82ffa1; min-width:30px;">
+									${user.rank === 1 ? '🥇' : user.rank === 2 ? '🥈' : user.rank === 3 ? '🥉' : `#${user.rank}`}
+								</div>
+								<div style="flex:1;">
+									<div style="font-weight:bold;">${user.username}</div>
+									<div style="font-size:12px; color:#8a8a8a;">${user.quests} quests • ${user.apt} APT</div>
+								</div>
+								<div style="font-size:16px;" title="Trend">${user.change}</div>
+							</div>
+						`).join('')}
+					</div>
+					<div style="text-align:center; margin-top:16px; color:#8a8a8a; font-size:12px;">
+						Last updated: ${new Date().toLocaleTimeString()}
+					</div>
+				</div>
+			`;
+		};
+
+		window.refreshLeaderboard = function() {
+			const btn = document.getElementById('refreshLeaderboardBtn');
+			btn.innerHTML = '⏳ Refreshing...';
+			btn.disabled = true;
+			
+			setTimeout(() => {
+				loadLeaderboard();
+				btn.innerHTML = '🔄 Refresh';
+				btn.disabled = false;
+			}, 1000);
+		};
+
+		// Dashboard Auto-Refresh Functions
+		window.toggleDashboardAutoRefresh = function() {
+			const btn = document.getElementById('dashboardAutoRefreshBtn');
+			
+			if (dashboardAutoRefreshEnabled) {
+				// Disable auto refresh
+				clearInterval(dashboardAutoRefreshInterval);
+				dashboardAutoRefreshEnabled = false;
+				btn.innerHTML = '🔄 Auto Refresh: OFF';
+				btn.style.background = 'transparent';
+			} else {
+				// Enable auto refresh
+				dashboardAutoRefreshInterval = setInterval(() => {
+					updateStats();
+					loadQuestHistory();
+					loadActivityTimeline();
+				}, 10000); // Refresh every 10 seconds
+				dashboardAutoRefreshEnabled = true;
+				btn.innerHTML = '🔄 Auto Refresh: ON';
+				btn.style.background = '#82ffa1';
+				btn.style.color = '#000';
+			}
+		};
+
+		window.toggleAutoRefresh = function() {
+			const btn = document.getElementById('autoRefreshBtn');
+			
+			if (autoRefreshEnabled) {
+				// Disable auto refresh
+				clearInterval(autoRefreshInterval);
+				autoRefreshEnabled = false;
+				btn.innerHTML = '⏰ Auto Refresh: OFF';
+				btn.style.background = 'transparent';
+			} else {
+				// Enable auto refresh
+				autoRefreshInterval = setInterval(() => {
+					loadLeaderboard();
+				}, 5000); // Refresh every 5 seconds
+				autoRefreshEnabled = true;
+				btn.innerHTML = '⏰ Auto Refresh: ON';
+				btn.style.background = '#82ffa1';
+				btn.style.color = '#000';
+			}
+		};
+
+		// Close leaderboard modal
+		document.getElementById('closeLeaderboard').addEventListener('click', (e) => {
+			e.preventDefault();
+			document.getElementById('leaderboardModal').style.display = 'none';
+			// Stop auto refresh when modal closes
+			if (autoRefreshEnabled) {
+				toggleAutoRefresh();
+			}
+		});
+
+		document.getElementById('leaderboardModal').addEventListener('click', (e) => {
+			if (e.target.id === 'leaderboardModal') {
+				document.getElementById('leaderboardModal').style.display = 'none';
+				// Stop auto refresh when modal closes
+				if (autoRefreshEnabled) {
+					toggleAutoRefresh();
+				}
+			}
+		});
+
+		// Live Quest Progress Functions
+		window.loadQuestProgress = function() {
+			const container = document.getElementById('questProgressContent');
+			if (!container) return;
+			
+			// Simulate live quest progress data
+			const questProgressData = [
+				{ quest: 'Move Basics', users: 45, completed: 32, inProgress: 13, completionRate: 71 },
+				{ quest: 'Smart Contracts', users: 38, completed: 28, inProgress: 10, completionRate: 74 },
+				{ quest: 'DeFi Protocols', users: 29, completed: 18, inProgress: 11, completionRate: 62 },
+				{ quest: 'NFT Development', users: 22, completed: 15, inProgress: 7, completionRate: 68 },
+				{ quest: 'Testing & Security', users: 19, completed: 12, inProgress: 7, completionRate: 63 },
+				{ quest: 'Advanced Move', users: 15, completed: 8, inProgress: 7, completionRate: 53 }
+			];
+			
+			container.innerHTML = `
+				<div style="background:#1a1a1a; border:1px solid #333; border-radius:8px; padding:16px;">
+					<div style="display:grid; gap:12px;">
+						${questProgressData.map(quest => `
+							<div style="border:1px solid #333; border-radius:8px; padding:16px; background:#0f0f0f;">
+								<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+									<h4 style="margin:0; color:#82ffa1;">${quest.quest}</h4>
+									<span style="color:#8a8a8a; font-size:12px;">${quest.completionRate}% completion</span>
+								</div>
+								<div style="background:#1a1a1a; border-radius:4px; height:8px; margin-bottom:8px;">
+									<div style="background:#82ffa1; height:100%; border-radius:4px; width:${quest.completionRate}%; transition: width 0.5s ease;"></div>
+								</div>
+								<div style="display:flex; justify-content:space-between; font-size:12px; color:#8a8a8a;">
+									<span>👥 ${quest.users} users</span>
+									<span>✅ ${quest.completed} completed</span>
+									<span>🔄 ${quest.inProgress} in progress</span>
+								</div>
+							</div>
+						`).join('')}
+					</div>
+					<div style="text-align:center; margin-top:16px; color:#8a8a8a; font-size:12px;">
+						Last updated: ${new Date().toLocaleTimeString()}
+					</div>
+				</div>
+			`;
+		};
+
+		window.refreshQuestProgress = function() {
+			const btn = document.getElementById('refreshQuestProgressBtn');
+			btn.innerHTML = '⏳ Refreshing...';
+			btn.disabled = true;
+			
+			setTimeout(() => {
+				loadQuestProgress();
+				btn.innerHTML = '🔄 Refresh';
+				btn.disabled = false;
+			}, 1000);
+		};
+
+		window.toggleQuestProgressAutoRefresh = function() {
+			const btn = document.getElementById('questProgressAutoRefreshBtn');
+			
+			if (questProgressAutoRefreshEnabled) {
+				// Disable auto refresh
+				clearInterval(questProgressAutoRefreshInterval);
+				questProgressAutoRefreshEnabled = false;
+				btn.innerHTML = '⏰ Auto Refresh: OFF';
+				btn.style.background = 'transparent';
+			} else {
+				// Enable auto refresh
+				questProgressAutoRefreshInterval = setInterval(() => {
+					loadQuestProgress();
+				}, 8000); // Refresh every 8 seconds
+				questProgressAutoRefreshEnabled = true;
+				btn.innerHTML = '⏰ Auto Refresh: ON';
+				btn.style.background = '#82ffa1';
+				btn.style.color = '#000';
+			}
+		};
+
+		// Close quest progress modal
+		document.getElementById('closeQuestProgress').addEventListener('click', (e) => {
+			e.preventDefault();
+			document.getElementById('questProgressModal').style.display = 'none';
+			// Stop auto refresh when modal closes
+			if (questProgressAutoRefreshEnabled) {
+				toggleQuestProgressAutoRefresh();
+			}
+		});
+
+		document.getElementById('questProgressModal').addEventListener('click', (e) => {
+			if (e.target.id === 'questProgressModal') {
+				document.getElementById('questProgressModal').style.display = 'none';
+				// Stop auto refresh when modal closes
+				if (questProgressAutoRefreshEnabled) {
+					toggleQuestProgressAutoRefresh();
+				}
+			}
+		});
+
+		// Like/React System Functions
+		window.likeQuest = function(questId, reaction) {
+			if (!userProfile) {
+				alert('Please create a profile first!');
+				return;
+			}
+			
+			// Get current quest data
+			const quest = quests.find(q => q.id === questId);
+			if (!quest) return;
+			
+			// Initialize reaction counts if not exist
+			if (!quest.likes) quest.likes = 0;
+			if (!quest.fire) quest.fire = 0;
+			if (!quest.rocket) quest.rocket = 0;
+			
+			// Update reaction count
+			if (reaction === '❤️') {
+				quest.likes++;
+				document.getElementById(`likes-${questId}`).textContent = quest.likes;
+			} else if (reaction === '🔥') {
+				quest.fire++;
+				document.getElementById(`fire-${questId}`).textContent = quest.fire;
+			} else if (reaction === '🚀') {
+				quest.rocket++;
+				document.getElementById(`rocket-${questId}`).textContent = quest.rocket;
+			}
+			
+			// Add activity to timeline
+			addActivity('👍', `Reacted ${reaction} to quest: ${quest.title}`);
+			
+			// Show feedback
+			const button = event.target.closest('button');
+			button.style.background = '#82ffa1';
+			button.style.color = '#000';
+			setTimeout(() => {
+				button.style.background = 'transparent';
+				button.style.color = '#fff';
+			}, 1000);
+		};
 
 	})();
 	</script>

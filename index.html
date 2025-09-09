@@ -855,10 +855,10 @@ module 0x1::hello_world {
 					<span class="badge">Completed: ${p.completed}</span>
 					<span class="badge">Streak: ${p.streak}d</span>
 				</div>
-				<div class="row" style="margin-top:12px; gap:8px;">
-					<button class="btn" data-profile="${p.id}" style="flex:1;">View Profile</button>
-					<button class="btn secondary" onclick="followUser('${p.handle}')" style="flex:1;">Follow</button>
-					<button class="btn secondary" onclick="openChat('${p.handle}', '${p.name}')" style="flex:1;">💬 Message</button>
+				<div class="row" style="margin-top:12px; gap:6px;">
+					<button class="btn" data-profile="${p.id}" style="flex:1; font-size:12px;">View Profile</button>
+					<button class="btn ${userProfile && userProfile.following && userProfile.following.includes(p.handle) ? '' : 'secondary'}" onclick="toggleFollow('${p.handle}')" id="followBtn_${p.handle}" style="flex:1; font-size:12px;">${userProfile && userProfile.following && userProfile.following.includes(p.handle) ? 'Followed' : 'Follow'}</button>
+					<button class="btn secondary" onclick="openChat('${p.handle}', '${p.name}')" style="flex:1; font-size:12px;">💬 Message</button>
 				</div>
 			</div>
 		`).join('');
@@ -2162,12 +2162,8 @@ public fun multiply(x: u64, y: u64): u64 {
 			}
 		};
 
-		window.toggleFollow = function() {
-			// This would be implemented with backend integration
-			alert('Follow functionality will be available with backend integration!');
-		};
 
-		window.followUser = function(userHandle) {
+		window.toggleFollow = function(userHandle) {
 			if (!userProfile) {
 				alert('Please create a profile first!');
 				return;
@@ -2175,16 +2171,30 @@ public fun multiply(x: u64, y: u64): u64 {
 			
 			if (!userProfile.following) userProfile.following = [];
 			
+			const followBtn = document.getElementById(`followBtn_${userHandle}`);
+			
 			if (userProfile.following.includes(userHandle)) {
 				// Unfollow
 				userProfile.following = userProfile.following.filter(u => u !== userHandle);
 				addActivity('👥', `Unfollowed @${userHandle}`);
-				alert(`👋 Unfollowed @${userHandle}`);
+				
+				// Update button
+				if (followBtn) {
+					followBtn.textContent = 'Follow';
+					followBtn.classList.remove('btn');
+					followBtn.classList.add('btn', 'secondary');
+				}
 			} else {
 				// Follow
 				userProfile.following.push(userHandle);
 				addActivity('👥', `Followed @${userHandle}`);
-				alert(`✅ Following @${userHandle}!\n\nYou'll see their updates in your activity feed.`);
+				
+				// Update button
+				if (followBtn) {
+					followBtn.textContent = 'Followed';
+					followBtn.classList.remove('btn', 'secondary');
+					followBtn.classList.add('btn');
+				}
 			}
 			
 			// Save to localStorage
@@ -2418,7 +2428,6 @@ public fun multiply(x: u64, y: u64): u64 {
 					type: "entry_function_payload",
 					function: "0x1::coin::transfer",
 					arguments: [
-						"0x1::aptos_coin::AptosCoin", // Coin type
 						"0x1", // Recipient (system address for now)
 						Math.floor(gasFee * 100000000) // Convert APT to octas
 					],

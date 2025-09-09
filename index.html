@@ -45,6 +45,7 @@
 		.kpi .lbl { color:#bdbdbd; font-size:12px; }
 
 		.footer { text-align:center; color:#8a8a8a; font-size:12px; padding: 24px 0 40px; }
+		.footer a:hover { color: #82ffa1; transition: color 0.2s ease; }
 
 		/* Modal */
 		.modalBack { position:fixed; inset:0; background:rgba(0,0,0,.8); display:none; place-items:center; z-index:1000; }
@@ -325,7 +326,40 @@
 	</main>
 
 	<footer class="footer container">
-		Move Builders Hub • Aptos Testnet • © 2025
+		<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; margin-bottom: 20px; text-align: left;">
+			<div>
+				<h4 style="color: #fff; margin: 0 0 12px 0; font-size: 14px;">Aptos Labs</h4>
+				<div style="display: flex; flex-direction: column; gap: 6px;">
+					<a href="https://aptoslabs.com" target="_blank" style="color: #8a8a8a; text-decoration: none; font-size: 12px;">Website</a>
+					<a href="https://github.com/aptos-labs" target="_blank" style="color: #8a8a8a; text-decoration: none; font-size: 12px;">GitHub</a>
+				</div>
+			</div>
+			<div>
+				<h4 style="color: #fff; margin: 0 0 12px 0; font-size: 14px;">Aptos Foundation</h4>
+				<div style="display: flex; flex-direction: column; gap: 6px;">
+					<a href="https://aptosfoundation.org" target="_blank" style="color: #8a8a8a; text-decoration: none; font-size: 12px;">Website</a>
+				</div>
+			</div>
+			<div>
+				<h4 style="color: #fff; margin: 0 0 12px 0; font-size: 14px;">Developer Resources</h4>
+				<div style="display: flex; flex-direction: column; gap: 6px;">
+					<a href="https://aptos.dev" target="_blank" style="color: #8a8a8a; text-decoration: none; font-size: 12px;">Documentation</a>
+					<a href="https://aptos.dev/move" target="_blank" style="color: #8a8a8a; text-decoration: none; font-size: 12px;">Move Language</a>
+					<a href="https://aptos.dev/sdks" target="_blank" style="color: #8a8a8a; text-decoration: none; font-size: 12px;">SDK & Tools</a>
+					<a href="https://aptos.dev/rest-api" target="_blank" style="color: #8a8a8a; text-decoration: none; font-size: 12px;">API Reference</a>
+				</div>
+			</div>
+			<div>
+				<h4 style="color: #fff; margin: 0 0 12px 0; font-size: 14px;">Explorer & Faucet</h4>
+				<div style="display: flex; flex-direction: column; gap: 6px;">
+					<a href="https://explorer.aptoslabs.com" target="_blank" style="color: #8a8a8a; text-decoration: none; font-size: 12px;">Block Explorer</a>
+					<a href="https://faucet.aptoslabs.com" target="_blank" style="color: #8a8a8a; text-decoration: none; font-size: 12px;">Testnet Faucet</a>
+				</div>
+			</div>
+		</div>
+		<div style="text-align: center; padding-top: 16px; border-top: 1px solid #2a2a2a;">
+			Move Builders Hub • Aptos Testnet • © 2025
+		</div>
 	</footer>
 
 	<!-- Quests Modal -->

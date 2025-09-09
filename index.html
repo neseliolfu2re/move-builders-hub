@@ -400,6 +400,36 @@
 		</div>
 	</div>
 
+	<!-- Chat Modal -->
+	<div id="chatModal" class="modalBack">
+		<div class="modal" style="max-width:800px; height:600px; display:flex; flex-direction:column;">
+			<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; border-bottom:1px solid #333; padding-bottom:12px;">
+				<div>
+					<h2 id="chatTitle">💬 Chat</h2>
+					<div id="chatGasInfo" style="font-size:12px; color:#8a8a8a;">Gas Fee: Loading...</div>
+				</div>
+				<a class="linkish" href="#" id="closeChat">Close ✕</a>
+			</div>
+			
+			<div id="chatMessages" style="flex:1; overflow-y:auto; padding:16px; background:#0f0f0f; border-radius:8px; margin:12px 0;">
+				<!-- Messages will be loaded here -->
+			</div>
+			
+			<div style="display:flex; gap:8px; align-items:center;">
+				<input type="text" id="messageInput" placeholder="Type your message..." style="flex:1; padding:12px; background:#1a1a1a; border:1px solid #333; border-radius:6px; color:#fff;">
+				<button class="btn" onclick="sendMessage()" id="sendMessageBtn">Send</button>
+			</div>
+			
+			<div style="display:flex; gap:8px; margin-top:8px; font-size:12px; color:#8a8a8a;">
+				<span id="messageCount">0 messages</span>
+				<span>•</span>
+				<span id="gasFeeDisplay">Gas: 0.001 APT</span>
+				<span>•</span>
+				<span id="networkStatus">Network: Normal</span>
+			</div>
+		</div>
+	</div>
+
 	<!-- Live Quest Progress Modal -->
 	<div id="questProgressModal" class="modalBack">
 		<div class="modal" style="max-width:800px;">
@@ -823,6 +853,7 @@ module 0x1::hello_world {
 				<div class="row" style="margin-top:12px; gap:8px;">
 					<button class="btn" data-profile="${p.id}" style="flex:1;">View Profile</button>
 					<button class="btn secondary" onclick="followUser('${p.handle}')" style="flex:1;">Follow</button>
+					<button class="btn secondary" onclick="openChat('${p.handle}', '${p.name}')" style="flex:1;">💬 Message</button>
 				</div>
 			</div>
 		`).join('');
@@ -2225,6 +2256,181 @@ public fun multiply(x: u64, y: u64): u64 {
 			document.getElementById('questProgressModal').style.display = 'grid';
 		};
 
+		// Messaging System Functions
+		window.openChat = function(userHandle, userName) {
+			if (!userProfile) {
+				alert('Please create a profile first!');
+				return;
+			}
+			
+			if (!walletConnected) {
+				alert('Please connect your wallet first!');
+				return;
+			}
+			
+			currentChatUser = userHandle;
+			document.getElementById('chatTitle').textContent = `💬 Chat with ${userName}`;
+			
+			// Load gas fee
+			updateGasFee();
+			
+			// Load messages
+			loadMessages();
+			
+			document.getElementById('chatModal').style.display = 'grid';
+		};
+
+		window.updateGasFee = async function() {
+			try {
+				// Simulate network status check
+				const networkStatus = Math.random();
+				let status, fee, time;
+				
+				if (networkStatus < 0.3) {
+					status = 'Low';
+					fee = 0.0005;
+					time = '~2s';
+				} else if (networkStatus < 0.7) {
+					status = 'Normal';
+					fee = 0.001;
+					time = '~5s';
+				} else if (networkStatus < 0.9) {
+					status = 'High';
+					fee = 0.002;
+					time = '~10s';
+				} else {
+					status = 'Very High';
+					fee = 0.005;
+					time = '~30s';
+				}
+				
+				gasFee = fee;
+				document.getElementById('chatGasInfo').textContent = `Gas Fee: ${fee} APT (${status})`;
+				document.getElementById('gasFeeDisplay').textContent = `Gas: ${fee} APT`;
+				document.getElementById('networkStatus').textContent = `Network: ${status}`;
+				
+			} catch (error) {
+				console.error('Error updating gas fee:', error);
+				document.getElementById('chatGasInfo').textContent = 'Gas Fee: 0.001 APT (Default)';
+			}
+		};
+
+		window.loadMessages = function() {
+			if (!currentChatUser) return;
+			
+			// Load messages from localStorage
+			const chatKey = `chat_${walletAddress}_${currentChatUser}`;
+			const storedMessages = localStorage.getItem(chatKey);
+			messages = storedMessages ? JSON.parse(storedMessages) : [];
+			
+			// Display messages
+			const container = document.getElementById('chatMessages');
+			if (messages.length === 0) {
+				container.innerHTML = '<p style="text-align:center; color:#8a8a8a; margin:20px 0;">No messages yet. Start the conversation!</p>';
+			} else {
+				container.innerHTML = messages.map(msg => `
+					<div style="display:flex; ${msg.sender === userProfile.username ? 'justify-content:flex-end' : 'justify-content:flex-start'}; margin-bottom:12px;">
+						<div style="max-width:70%; padding:8px 12px; border-radius:12px; background:${msg.sender === userProfile.username ? '#82ffa1' : '#333'}; color:${msg.sender === userProfile.username ? '#000' : '#fff'};">
+							<div style="font-size:12px; opacity:0.7; margin-bottom:4px;">${msg.sender}</div>
+							<div>${msg.content}</div>
+							<div style="font-size:10px; opacity:0.6; margin-top:4px;">${new Date(msg.timestamp).toLocaleTimeString()}</div>
+						</div>
+					</div>
+				`).join('');
+			}
+			
+			// Update message count
+			document.getElementById('messageCount').textContent = `${messages.length} messages`;
+			
+			// Scroll to bottom
+			container.scrollTop = container.scrollHeight;
+		};
+
+		window.sendMessage = async function() {
+			const messageInput = document.getElementById('messageInput');
+			const content = messageInput.value.trim();
+			
+			if (!content) return;
+			if (!currentChatUser) return;
+			if (!userProfile) return;
+			
+			// Show loading state
+			const sendBtn = document.getElementById('sendMessageBtn');
+			sendBtn.innerHTML = '⏳ Sending...';
+			sendBtn.disabled = true;
+			
+			try {
+				// Simulate transaction
+				await simulateMessageTransaction(content);
+				
+				// Add message to local storage
+				const newMessage = {
+					id: Date.now(),
+					sender: userProfile.username,
+					content: content,
+					timestamp: new Date().toISOString(),
+					gasFee: gasFee,
+					recipient: currentChatUser
+				};
+				
+				messages.push(newMessage);
+				const chatKey = `chat_${walletAddress}_${currentChatUser}`;
+				localStorage.setItem(chatKey, JSON.stringify(messages));
+				
+				// Clear input and reload messages
+				messageInput.value = '';
+				loadMessages();
+				
+				// Add activity
+				addActivity('💬', `Sent message to @${currentChatUser}`);
+				
+				// Update gas fee for next message
+				updateGasFee();
+				
+			} catch (error) {
+				console.error('Error sending message:', error);
+				alert('Failed to send message. Please try again.');
+			} finally {
+				sendBtn.innerHTML = 'Send';
+				sendBtn.disabled = false;
+			}
+		};
+
+		window.simulateMessageTransaction = async function(content) {
+			// Simulate wallet transaction
+			return new Promise((resolve, reject) => {
+				setTimeout(() => {
+					// Simulate 90% success rate
+					if (Math.random() > 0.1) {
+						resolve();
+					} else {
+						reject(new Error('Transaction failed'));
+					}
+				}, 2000);
+			});
+		};
+
+		// Close chat modal
+		document.getElementById('closeChat').addEventListener('click', (e) => {
+			e.preventDefault();
+			document.getElementById('chatModal').style.display = 'none';
+			currentChatUser = null;
+		});
+
+		document.getElementById('chatModal').addEventListener('click', (e) => {
+			if (e.target.id === 'chatModal') {
+				document.getElementById('chatModal').style.display = 'none';
+				currentChatUser = null;
+			}
+		});
+
+		// Enter key to send message
+		document.addEventListener('keypress', (e) => {
+			if (e.key === 'Enter' && document.getElementById('messageInput') === document.activeElement) {
+				sendMessage();
+			}
+		});
+
 		window.loadActivityFeed = function() {
 			if (!userProfile) return;
 			
@@ -2298,6 +2504,9 @@ public fun multiply(x: u64, y: u64): u64 {
 		let dashboardAutoRefreshEnabled = false;
 		let questProgressAutoRefreshInterval = null;
 		let questProgressAutoRefreshEnabled = false;
+		let currentChatUser = null;
+		let messages = [];
+		let gasFee = 0.001;
 
 		window.loadLeaderboard = function() {
 			const container = document.getElementById('leaderboardContent');

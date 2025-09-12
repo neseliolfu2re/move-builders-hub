@@ -1,19 +1,45 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Test - Move Builders Hub</title>
-    <style>
-        body { font-family: Arial; background: #000; color: #fff; text-align: center; padding: 50px; }
-        h1 { color: #00ff00; }
-    </style>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Move Builders Hub • Test</title>
+	<style>
+		body { background: #000; color: #fff; font-family: Arial; }
+		.btn { background: #fff; color: #000; padding: 10px; border: none; cursor: pointer; }
+		.card { background: #111; padding: 20px; margin: 10px; border: 1px solid #333; }
+	</style>
 </head>
 <body>
-    <h1>🚀 TEST BAŞARILI!</h1>
-    <h2>Move Builders Hub</h2>
-    <p>Bu dosyayı görüyorsanız, upload işlemi çalışıyor.</p>
-    <p>Şimdi index.html dosyasını aynı konuma yükleyin.</p>
-    <hr>
-    <p><strong>Dosya konumu:</strong> public_html/test.html</p>
-    <p><strong>URL:</strong> movebuildershub.xyz/test.html</p>
+	<h1>Move Builders Hub Test</h1>
+	
+	<button class="btn" onclick="testFunction()">Test Button</button>
+	
+	<div id="profilesGrid"></div>
+	
+	<script>
+		// Test function
+		function testFunction() {
+			alert('JavaScript çalışıyor!');
+		}
+		
+		// Test profiles
+		const profiles = [
+			{ id: 1, name: 'Neşe Demir', handle: '@nese', bio: 'Move developer' },
+			{ id: 2, name: 'Deniz Arda', handle: '@deniz', bio: 'Tooling expert' }
+		];
+		
+		// Load profiles when page loads
+		document.addEventListener('DOMContentLoaded', function() {
+			const grid = document.getElementById('profilesGrid');
+			grid.innerHTML = profiles.map(p => `
+				<div class="card">
+					<h3>${p.name} ${p.handle}</h3>
+					<p>${p.bio}</p>
+					<button class="btn" onclick="alert('${p.name} clicked!')">Click Me</button>
+				</div>
+			`).join('');
+		});
+	</script>
 </body>
 </html>

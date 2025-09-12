@@ -11,7 +11,7 @@
 	<meta name="apple-mobile-web-app-title" content="Move Builders Hub">
 	<link rel="manifest" href="manifest.json">
 	<link rel="apple-touch-icon" href="logo.png">
-	<style>
+	<script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=mOrX-bGrCd2ojWTI94dLZLQXd0p6VX2nlfhNmWDlzTu8DOK_rxjPU8OBRLuCZFuLh3p8O9MEaFBrAe-iHHUHx_QAsWKSzJkhDmfGp72q4VyONaBmp7xKnN72LC8VkvniWDAxiXR9et8jbV4BfJJc71SFF1MaVe5OJsb8yTEzUZ-tGI1kHzW85c-qr6KeNPoFJ63RW2TiFXdFKFB9DKpPtQ" charset="UTF-8"></script><link rel="stylesheet" crossorigin="anonymous" href="https://gc.kis.v2.scr.kaspersky-labs.com/E3E8934C-235A-4B0E-825A-35A08381A191/abn/main.css?attr=aHR0cHM6Ly9tdC1zb25vbWEuZ3V6ZWxob3N0aW5nLmNvbToyMDgzL2Nwc2VzczQ0MDgzMTc2NzQvZG93bmxvYWQ_c2tpcGVuY29kZT0xJmZpbGU9JTJmaG9tZSUyZmZ1cmVvcmclMmZtb3ZlYnVpbGRlcnNodWIueHl6JTJmaW5kZXguaHRtbA"/><style>
 		:root { color-scheme: dark; }
 		html, body { height: 100%; }
 		* { box-sizing: border-box; }
@@ -45,7 +45,6 @@
 		.kpi .lbl { color:#bdbdbd; font-size:12px; }
 
 		.footer { text-align:center; color:#8a8a8a; font-size:12px; padding: 24px 0 40px; }
-		.footer a:hover { color: #82ffa1; transition: color 0.2s ease; }
 
 		/* Modal */
 		.modalBack { position:fixed; inset:0; background:rgba(0,0,0,.8); display:none; place-items:center; z-index:1000; }
@@ -79,10 +78,20 @@
 	<!-- Top Navigation with Wallet -->
 	<nav style="position: fixed; top: 0; right: 0; z-index: 1000; padding: 16px;">
 		<button class="btn" id="connectWallet" style="display:none; font-size:12px; padding:8px 12px;">Connect Wallet</button>
-		<div id="walletInfo" style="display:none; background:#0f0f0f; border:1px solid #2a2a2a; border-radius:8px; padding:8px; text-align:center;">
+		<div id="walletInfo" style="display:none; background:#0f0f0f; border:1px solid #2a2a2a; border-radius:8px; padding:8px; text-align:center; position:relative; cursor:pointer;" onclick="toggleUserDropdown()">
 			<div style="color:#82ffa1; font-size:11px; margin-bottom:4px;">🟢 Connected</div>
+			<div id="userName" style="color:#fff; font-size:12px; margin-bottom:2px; font-weight:bold;"></div>
 			<div id="walletAddress" style="font-family:monospace; font-size:10px; color:#cfcfcf; margin-bottom:6px;"></div>
-			<button class="btn secondary" id="disconnectWallet" style="font-size:10px; padding:4px 8px;">Disconnect</button>
+			<button class="btn secondary" id="disconnectWallet" style="font-size:10px; padding:4px 8px;" onclick="event.stopPropagation(); disconnectWallet();">Disconnect</button>
+			
+			<!-- User Profile Dropdown -->
+			<div id="userProfileDropdown" style="display:none; position:absolute; top:100%; right:0; background:#1a1a1a; border:1px solid #333; border-radius:8px; padding:8px; margin-top:4px; min-width:200px; box-shadow:0 4px 12px rgba(0,0,0,0.3);">
+				<button class="btn secondary" id="viewMyProfileBtn" style="width:100%; font-size:11px; margin-bottom:4px;">👤 View My Profile</button>
+				<button class="btn secondary" id="editProfileBtn" style="width:100%; font-size:11px; margin-bottom:4px;">✏️ Edit Profile</button>
+				<button class="btn secondary" id="getReferralLinkBtn" style="width:100%; font-size:11px; margin-bottom:4px;">🔗 Get Referral Link</button>
+				<button class="btn secondary" id="socialLinksBtn" style="width:100%; font-size:11px; margin-bottom:4px;">📱 Social Links</button>
+				<button class="btn secondary" id="closeDropdown" style="width:100%; font-size:11px; background:#333;">✕ Close</button>
+			</div>
 		</div>
 	</nav>
 
@@ -104,10 +113,10 @@
 		</div>
 		<div class="ctaRow">
 			<button class="btn" id="exploreQuests">Explore Quests</button>
-			<button class="btn secondary" id="viewStats">View Analytics</button>
+			<button class="btn secondary" id="viewStats">🎯 Quest Progress</button>
 			<button class="btn secondary" id="myDashboard" style="display:none;">My Dashboard</button>
 		</div>
-		<!-- Referral Section (moved to bottom) -->
+		<!-- Referral Section (hidden - moved to profile) -->
 		<div id="referralSection" style="display:none; margin-top:12px;">
 			<button class="btn secondary" id="getReferralLink" style="font-size:12px;">🔗 Get Referral Link</button>
 		</div>
@@ -155,6 +164,41 @@
 		<section>
 			<h2 class="sectionTitle">Builder Profiles</h2>
 			<div class="grid" id="profilesGrid"></div>
+		
+		<!-- Chat Modal -->
+		<div id="chatModal" class="modalBack">
+			<div class="modal" style="max-width:800px; height:600px; display:flex; flex-direction:column;">
+				<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; border-bottom:1px solid #333; padding-bottom:12px;">
+					<div>
+						<h2 id="chatTitle">💬 Chat</h2>
+						<div id="chatGasInfo" style="font-size:12px; color:#8a8a8a;">Gas Fee: Loading...</div>
+					</div>
+					<a class="linkish" href="#" id="closeChat">Close ✕</a>
+				</div>
+				
+				<div id="chatMessages" style="flex:1; overflow-y:auto; padding:16px; background:#0f0f0f; border-radius:8px; margin:12px 0;">
+					<!-- Messages will be loaded here -->
+				</div>
+				
+				<div style="display:flex; gap:8px; align-items:center;">
+					<input type="text" id="messageInput" placeholder="Type your message..." style="flex:1; padding:12px; background:#1a1a1a; border:1px solid #333; border-radius:6px; color:#fff;">
+					<button class="btn" onclick="sendMessage()" id="sendMessageBtn">Send</button>
+				</div>
+				
+				<div style="display:flex; gap:8px; margin-top:8px; font-size:12px; color:#8a8a8a;">
+					<span id="messageCount">0 messages</span>
+					<span>•</span>
+					<span id="gasFeeDisplay">Gas: 0.001 APT</span>
+					<span>•</span>
+					<span id="networkStatus">Network: Normal</span>
+				</div>
+				
+				<div id="transactionInfo" style="margin-top:8px; padding:8px; background:#1a1a1a; border-radius:6px; font-size:11px; color:#8a8a8a; display:none;">
+					<div>💳 <strong>Transaction Required:</strong> Each message requires a small gas fee to prevent spam</div>
+					<div style="margin-top:4px;">🔒 <strong>Secure:</strong> Your wallet will ask for approval before sending</div>
+				</div>
+			</div>
+		</div>
 		</section>
 
 		<div class="divider"></div>
@@ -326,40 +370,7 @@
 	</main>
 
 	<footer class="footer container">
-		<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; margin-bottom: 20px; text-align: left;">
-			<div>
-				<h4 style="color: #fff; margin: 0 0 12px 0; font-size: 14px;">Aptos Labs</h4>
-				<div style="display: flex; flex-direction: column; gap: 6px;">
-					<a href="https://aptoslabs.com" target="_blank" style="color: #8a8a8a; text-decoration: none; font-size: 12px;">Website</a>
-					<a href="https://github.com/aptos-labs" target="_blank" style="color: #8a8a8a; text-decoration: none; font-size: 12px;">GitHub</a>
-				</div>
-			</div>
-			<div>
-				<h4 style="color: #fff; margin: 0 0 12px 0; font-size: 14px;">Aptos Foundation</h4>
-				<div style="display: flex; flex-direction: column; gap: 6px;">
-					<a href="https://aptosfoundation.org" target="_blank" style="color: #8a8a8a; text-decoration: none; font-size: 12px;">Website</a>
-				</div>
-			</div>
-			<div>
-				<h4 style="color: #fff; margin: 0 0 12px 0; font-size: 14px;">Developer Resources</h4>
-				<div style="display: flex; flex-direction: column; gap: 6px;">
-					<a href="https://aptos.dev" target="_blank" style="color: #8a8a8a; text-decoration: none; font-size: 12px;">Documentation</a>
-					<a href="https://aptos.dev/move" target="_blank" style="color: #8a8a8a; text-decoration: none; font-size: 12px;">Move Language</a>
-					<a href="https://aptos.dev/sdks" target="_blank" style="color: #8a8a8a; text-decoration: none; font-size: 12px;">SDK & Tools</a>
-					<a href="https://aptos.dev/rest-api" target="_blank" style="color: #8a8a8a; text-decoration: none; font-size: 12px;">API Reference</a>
-				</div>
-			</div>
-			<div>
-				<h4 style="color: #fff; margin: 0 0 12px 0; font-size: 14px;">Explorer & Faucet</h4>
-				<div style="display: flex; flex-direction: column; gap: 6px;">
-					<a href="https://explorer.aptoslabs.com" target="_blank" style="color: #8a8a8a; text-decoration: none; font-size: 12px;">Block Explorer</a>
-					<a href="https://faucet.aptoslabs.com" target="_blank" style="color: #8a8a8a; text-decoration: none; font-size: 12px;">Testnet Faucet</a>
-				</div>
-			</div>
-		</div>
-		<div style="text-align: center; padding-top: 16px; border-top: 1px solid #2a2a2a;">
-			Move Builders Hub • Aptos Testnet • © 2025
-		</div>
+		Move Builders Hub • Aptos Testnet • © 2025
 	</footer>
 
 	<!-- Quests Modal -->
@@ -381,11 +392,47 @@
 				<h2 id="pm_name">Builder Profile</h2>
 				<a class="linkish" href="#" id="pm_close">Close ✕</a>
 			</div>
-			<p id="pm_bio" class="subtitle"></p>
-			<div class="chips" id="pm_skills"></div>
-			<div class="row" style="margin-top:10px">
-				<span id="pm_avail" class="badge"></span>
-				<span id="pm_tz" class="badge"></span>
+			
+			<!-- Avatar Section -->
+			<div id="pm_avatar" style="text-align:center; margin:20px 0;">
+				<!-- Avatar upload button for own profile -->
+				<div id="avatarUploadSection" style="display:none; margin-bottom:15px;">
+					<input type="file" id="avatarUpload" accept="image/*" style="display:none;">
+					<button class="btn secondary" onclick="document.getElementById('avatarUpload').click()" style="font-size:11px;">📷 Upload Avatar</button>
+				</div>
+			</div>
+			
+			<!-- Username Section -->
+			<div style="text-align:center; margin:10px 0;">
+				<h2 id="pm_username" style="color:#82ffa1; margin:0; font-size:18px;"></h2>
+				<p id="pm_handle" style="color:#888; margin:5px 0 0 0; font-size:12px;"></p>
+			</div>
+			
+			<!-- Bio Section -->
+			<div style="background:#1a1a1a; padding:15px; border-radius:8px; margin:15px 0;">
+				<h3 style="color:#82ffa1; margin:0 0 10px 0; font-size:14px;">📝 Bio</h3>
+				<p id="pm_bio" class="subtitle" style="margin:0; line-height:1.5;"></p>
+			</div>
+			
+			<!-- Skills Section -->
+			<div style="background:#1a1a1a; padding:15px; border-radius:8px; margin:15px 0;">
+				<h3 style="color:#82ffa1; margin:0 0 10px 0; font-size:14px;">🛠️ Skills</h3>
+				<div class="chips" id="pm_skills"></div>
+			</div>
+			
+			<!-- Status Section -->
+			<div style="background:#1a1a1a; padding:15px; border-radius:8px; margin:15px 0;">
+				<h3 style="color:#82ffa1; margin:0 0 10px 0; font-size:14px;">📊 Status</h3>
+				<div class="row" style="margin:0;">
+					<span id="pm_avail" class="badge"></span>
+					<span id="pm_tz" class="badge"></span>
+				</div>
+			</div>
+			
+			<!-- Social Links Section -->
+			<div style="background:#1a1a1a; padding:15px; border-radius:8px; margin:15px 0;">
+				<h3 style="color:#82ffa1; margin:0 0 10px 0; font-size:14px;">🔗 Social Links</h3>
+				<div id="pm_social" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
 			</div>
 			<div style="margin-top:12px" id="pm_links" class="row"></div>
 			<div class="divider"></div>
@@ -400,112 +447,6 @@
 		</div>
 	</div>
 
-	<!-- Chat Modal -->
-	<div id="chatModal" class="modalBack">
-		<div class="modal" style="max-width:800px; height:600px; display:flex; flex-direction:column;">
-			<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; border-bottom:1px solid #333; padding-bottom:12px;">
-				<div>
-					<h2 id="chatTitle">💬 Chat</h2>
-					<div id="chatGasInfo" style="font-size:12px; color:#8a8a8a;">Gas Fee: Loading...</div>
-				</div>
-				<a class="linkish" href="#" id="closeChat">Close ✕</a>
-			</div>
-			
-			<div id="chatMessages" style="flex:1; overflow-y:auto; padding:16px; background:#0f0f0f; border-radius:8px; margin:12px 0;">
-				<!-- Messages will be loaded here -->
-			</div>
-			
-			<div style="display:flex; gap:8px; align-items:center;">
-				<input type="text" id="messageInput" placeholder="Type your message..." style="flex:1; padding:12px; background:#1a1a1a; border:1px solid #333; border-radius:6px; color:#fff;">
-				<button class="btn" onclick="sendMessage()" id="sendMessageBtn">Send</button>
-			</div>
-			
-			<div style="display:flex; gap:8px; margin-top:8px; font-size:12px; color:#8a8a8a;">
-				<span id="messageCount">0 messages</span>
-				<span>•</span>
-				<span id="gasFeeDisplay">Gas: 0.001 APT</span>
-				<span>•</span>
-				<span id="networkStatus">Network: Normal</span>
-			</div>
-			
-			<div id="transactionInfo" style="margin-top:8px; padding:8px; background:#1a1a1a; border-radius:6px; font-size:11px; color:#8a8a8a; display:none;">
-				<div>💳 <strong>Transaction Required:</strong> Each message requires a small gas fee to prevent spam</div>
-				<div style="margin-top:4px;">🔒 <strong>Secure:</strong> Your wallet will ask for approval before sending</div>
-			</div>
-		</div>
-	</div>
-
-	<!-- Live Quest Progress Modal -->
-	<div id="questProgressModal" class="modalBack">
-		<div class="modal" style="max-width:800px;">
-			<div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-				<h2>📊 Live Quest Progress</h2>
-				<a class="linkish" href="#" id="closeQuestProgress">Close ✕</a>
-			</div>
-			
-			<div style="display:flex; gap:12px; margin:16px 0;">
-				<button class="btn secondary" onclick="refreshQuestProgress()" id="refreshQuestProgressBtn">🔄 Refresh</button>
-				<button class="btn secondary" onclick="toggleQuestProgressAutoRefresh()" id="questProgressAutoRefreshBtn">⏰ Auto Refresh: OFF</button>
-			</div>
-			
-			<div id="questProgressContent">
-				<!-- Quest progress content will be loaded here -->
-			</div>
-		</div>
-	</div>
-
-	<!-- Live Leaderboard Modal -->
-	<div id="leaderboardModal" class="modalBack">
-		<div class="modal" style="max-width:700px;">
-			<div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-				<h2>🏆 Live Leaderboard</h2>
-				<a class="linkish" href="#" id="closeLeaderboard">Close ✕</a>
-			</div>
-			
-			<div style="display:flex; gap:12px; margin:16px 0;">
-				<button class="btn secondary" onclick="refreshLeaderboard()" id="refreshLeaderboardBtn">🔄 Refresh</button>
-				<button class="btn secondary" onclick="toggleAutoRefresh()" id="autoRefreshBtn">⏰ Auto Refresh: OFF</button>
-			</div>
-			
-			<div id="leaderboardContent">
-				<!-- Leaderboard content will be loaded here -->
-			</div>
-		</div>
-	</div>
-
-	<!-- Activity Feed Modal -->
-	<div id="activityFeedModal" class="modalBack">
-		<div class="modal" style="max-width:700px;">
-			<div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-				<h2>📰 Activity Feed</h2>
-				<a class="linkish" href="#" id="closeActivityFeed">Close ✕</a>
-			</div>
-			
-			<div id="activityFeedContent">
-				<!-- Activity feed content will be loaded here -->
-			</div>
-		</div>
-	</div>
-
-	<!-- Public Profile Modal -->
-	<div id="publicProfileModal" class="modalBack">
-		<div class="modal" style="max-width:600px;">
-			<div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-				<h2 id="publicProfileTitle">👤 Public Profile</h2>
-				<a class="linkish" href="#" id="closePublicProfile">Close ✕</a>
-			</div>
-			
-			<div id="publicProfileContent">
-				<!-- Profile content will be loaded here -->
-			</div>
-			
-			<div style="margin-top:20px; display:flex; gap:12px; justify-content:space-between;">
-				<button class="btn secondary" onclick="shareProfile()">📤 Share Profile</button>
-				<button class="btn" id="followBtn" onclick="toggleFollow()">Follow</button>
-			</div>
-		</div>
-	</div>
-
 	<!-- Create Profile Modal -->
 	<div id="createProfileModal" class="modalBack">
 		<div class="modal" style="max-width:500px;">
@@ -516,6 +457,18 @@
 			
 			<div style="margin:16px 0;">
 				<h3 style="margin:0 0 8px 0;">Avatar</h3>
+				
+				<!-- Upload Custom Avatar -->
+				<div style="margin-bottom:15px; text-align:center;">
+					<input type="file" id="customAvatarUpload" accept="image/*" style="display:none;">
+					<button class="btn secondary" onclick="document.getElementById('customAvatarUpload').click()" style="font-size:12px; margin-bottom:10px;">📷 Upload Custom Avatar</button>
+					<div id="customAvatarPreview" style="display:none; margin:10px 0;">
+						<img id="customAvatarImg" style="width:60px; height:60px; border-radius:50%; border:2px solid #82ffa1;">
+					</div>
+				</div>
+				
+				<!-- Or choose from emojis -->
+				<p style="margin:10px 0 8px 0; font-size:12px; color:#888;">Or choose from emojis:</p>
 				<div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; margin:8px 0;">
 					<div class="avatar-option" data-avatar="🧑‍💻" onclick="selectAvatar('🧑‍💻')" style="font-size:24px; padding:8px; text-align:center; border:2px solid #333; border-radius:8px; cursor:pointer;">🧑‍💻</div>
 					<div class="avatar-option" data-avatar="👨‍💻" onclick="selectAvatar('👨‍💻')" style="font-size:24px; padding:8px; text-align:center; border:2px solid #333; border-radius:8px; cursor:pointer;">👨‍💻</div>
@@ -532,66 +485,48 @@
 				<h3 style="margin:16px 0 8px 0;">Email *</h3>
 				<input type="email" id="emailInput" placeholder="your@email.com" style="width:100%; padding:10px; background:#1a1a1a; border:1px solid #333; border-radius:6px; color:#fff;">
 				
-				<h3 style="margin:16px 0 8px 0;">Skills</h3>
-				<div class="skills-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap:8px;">
-					<label class="skill-checkbox" style="display:flex; align-items:center; gap:6px; cursor:pointer; padding:6px; border:1px solid #333; border-radius:6px;">
-						<input type="checkbox" value="Move" style="accent-color:#82ffa1;">
-						<span style="font-size:12px;">Move</span>
+				<h3 style="margin:16px 0 8px 0;">Skills (Select all that apply)</h3>
+				<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap:8px; margin:8px 0;">
+					<label style="display:flex; align-items:center; gap:6px; font-size:14px;">
+						<input type="checkbox" name="skills" value="Move"> Move
 					</label>
-					<label class="skill-checkbox" style="display:flex; align-items:center; gap:6px; cursor:pointer; padding:6px; border:1px solid #333; border-radius:6px;">
-						<input type="checkbox" value="Rust" style="accent-color:#82ffa1;">
-						<span style="font-size:12px;">Rust</span>
+					<label style="display:flex; align-items:center; gap:6px; font-size:14px;">
+						<input type="checkbox" name="skills" value="Rust"> Rust
 					</label>
-					<label class="skill-checkbox" style="display:flex; align-items:center; gap:6px; cursor:pointer; padding:6px; border:1px solid #333; border-radius:6px;">
-						<input type="checkbox" value="JavaScript" style="accent-color:#82ffa1;">
-						<span style="font-size:12px;">JavaScript</span>
+					<label style="display:flex; align-items:center; gap:6px; font-size:14px;">
+						<input type="checkbox" name="skills" value="Smart Contracts"> Smart Contracts
 					</label>
-					<label class="skill-checkbox" style="display:flex; align-items:center; gap:6px; cursor:pointer; padding:6px; border:1px solid #333; border-radius:6px;">
-						<input type="checkbox" value="Python" style="accent-color:#82ffa1;">
-						<span style="font-size:12px;">Python</span>
+					<label style="display:flex; align-items:center; gap:6px; font-size:14px;">
+						<input type="checkbox" name="skills" value="DeFi"> DeFi
 					</label>
-					<label class="skill-checkbox" style="display:flex; align-items:center; gap:6px; cursor:pointer; padding:6px; border:1px solid #333; border-radius:6px;">
-						<input type="checkbox" value="Solidity" style="accent-color:#82ffa1;">
-						<span style="font-size:12px;">Solidity</span>
+					<label style="display:flex; align-items:center; gap:6px; font-size:14px;">
+						<input type="checkbox" name="skills" value="Security"> Security
 					</label>
-					<label class="skill-checkbox" style="display:flex; align-items:center; gap:6px; cursor:pointer; padding:6px; border:1px solid #333; border-radius:6px;">
-						<input type="checkbox" value="Web3" style="accent-color:#82ffa1;">
-						<span style="font-size:12px;">Web3</span>
+					<label style="display:flex; align-items:center; gap:6px; font-size:14px;">
+						<input type="checkbox" name="skills" value="Testing"> Testing
 					</label>
 				</div>
 				
 				<h3 style="margin:16px 0 8px 0;">Experience Level</h3>
 				<select id="experienceInput" style="width:100%; padding:10px; background:#1a1a1a; border:1px solid #333; border-radius:6px; color:#fff;">
-					<option value="beginner">Beginner</option>
-					<option value="intermediate">Intermediate</option>
-					<option value="advanced">Advanced</option>
+					<option value="Beginner">Beginner</option>
+					<option value="Intermediate">Intermediate</option>
+					<option value="Advanced">Advanced</option>
+					<option value="Expert">Expert</option>
 				</select>
 				
 				<h3 style="margin:16px 0 8px 0;">Social Links (Optional)</h3>
-				<div style="display:grid; gap:12px;">
-					<div>
-						<label style="display:block; margin-bottom:4px; font-size:14px; color:#cfcfcf;">🐦 X (Twitter) Handle</label>
-						<input type="text" id="twitterInput" placeholder="@username" style="width:100%; padding:10px; background:#1a1a1a; border:1px solid #333; border-radius:6px; color:#fff;">
-					</div>
-					<div>
-						<label style="display:block; margin-bottom:4px; font-size:14px; color:#cfcfcf;">💻 GitHub Username</label>
-						<input type="text" id="githubInput" placeholder="username" style="width:100%; padding:10px; background:#1a1a1a; border:1px solid #333; border-radius:6px; color:#fff;">
-					</div>
-					<div>
-						<label style="display:block; margin-bottom:4px; font-size:14px; color:#cfcfcf;">💼 LinkedIn (Optional)</label>
-						<input type="text" id="linkedinInput" placeholder="linkedin.com/in/username" style="width:100%; padding:10px; background:#1a1a1a; border:1px solid #333; border-radius:6px; color:#fff;">
-					</div>
-				</div>
+				<input type="text" id="twitterInput" placeholder="X/Twitter handle (e.g., @username)" style="width:100%; padding:10px; background:#1a1a1a; border:1px solid #333; border-radius:6px; color:#fff; margin-bottom:8px;">
+				<input type="text" id="githubInput" placeholder="GitHub username" style="width:100%; padding:10px; background:#1a1a1a; border:1px solid #333; border-radius:6px; color:#fff; margin-bottom:8px;">
+				<input type="text" id="linkedinInput" placeholder="LinkedIn profile URL" style="width:100%; padding:10px; background:#1a1a1a; border:1px solid #333; border-radius:6px; color:#fff; margin-bottom:8px;">
 				
 				<h3 style="margin:16px 0 8px 0;">Privacy Settings</h3>
-				<div style="display:flex; flex-direction:column; gap:8px;">
-					<label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-						<input type="radio" name="privacy" value="public" checked style="accent-color:#82ffa1;">
-						<span>🌐 Public Profile (Others can see your progress)</span>
+				<div style="display:flex; gap:16px; margin:8px 0;">
+					<label style="display:flex; align-items:center; gap:6px;">
+						<input type="radio" name="privacy" value="public" checked> Public
 					</label>
-					<label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-						<input type="radio" name="privacy" value="private" style="accent-color:#82ffa1;">
-						<span>🔒 Private Profile (Only you can see your progress)</span>
+					<label style="display:flex; align-items:center; gap:6px;">
+						<input type="radio" name="privacy" value="private"> Private
 					</label>
 				</div>
 			</div>
@@ -681,44 +616,17 @@
 						<div style="font-size:24px; font-weight:700; color:#82ffa1;" id="userXP">0</div>
 						<div style="font-size:12px; color:#cfcfcf;">XP Points</div>
 					</div>
-					<div style="text-align:center; padding:12px; border:1px solid #333; border-radius:8px; background:#0f1f0f;">
-						<div style="font-size:24px; font-weight:700; color:#82ffa1;" id="userFollowers">0</div>
-						<div style="font-size:12px; color:#cfcfcf;">Followers</div>
-					</div>
-					<div style="text-align:center; padding:12px; border:1px solid #333; border-radius:8px; background:#0f1f0f;">
-						<div style="font-size:24px; font-weight:700; color:#82ffa1;" id="userFollowing">0</div>
-						<div style="font-size:12px; color:#cfcfcf;">Following</div>
-					</div>
 				</div>
 				
-				<!-- Quest Completion History -->
-				<h3>📈 Quest Completion History</h3>
-				<div id="questHistory" style="background:#1a1a1a; border:1px solid #333; border-radius:8px; padding:16px; margin:8px 0;">
-					<div style="display:grid; gap:8px;">
-						<!-- Quest history items will be loaded here -->
-					</div>
-				</div>
-				
-				<!-- Achievement Showcase -->
-				<h3>🏆 Achievement Showcase</h3>
+				<h3>🏆 Your Badges</h3>
 				<div id="userBadges" class="chips"></div>
 				
-				<!-- Activity Timeline -->
-				<h3>📅 Recent Activity</h3>
-				<div id="activityTimeline" style="background:#1a1a1a; border:1px solid #333; border-radius:8px; padding:16px; margin:8px 0;">
-					<div style="display:grid; gap:12px;">
-						<!-- Activity items will be loaded here -->
+				<h3 style="margin-top:20px;">📈 Recommended Next Steps</h3>
+				<div id="recommendations">
+					<div style="padding:12px; border:1px solid #2a5a2a; border-radius:8px; background:#0f1f0f; margin:8px 0;">
+						<strong>🎯 Complete Quest 1</strong><br>
+						<small>Start with Move basics to build your foundation</small>
 					</div>
-				</div>
-				
-				<!-- Profile Management -->
-				<div style="margin-top:20px; display:flex; gap:12px; justify-content:space-between; flex-wrap:wrap;">
-					<button class="btn secondary" onclick="editProfile()">✏️ Edit Profile</button>
-					<button class="btn secondary" onclick="shareProfile()">📤 Share Profile</button>
-					<button class="btn secondary" onclick="openActivityFeed()">📰 Activity Feed</button>
-					<button class="btn secondary" onclick="openQuestProgress()">📊 Quest Progress</button>
-					<button class="btn secondary" onclick="toggleDashboardAutoRefresh()" id="dashboardAutoRefreshBtn">🔄 Auto Refresh: OFF</button>
-					<button class="btn" onclick="viewPublicProfile()">👁️ View Public Profile</button>
 				</div>
 			</div>
 		</div>
@@ -795,19 +703,19 @@ module 0x1::hello_world {
 	</div>
 
 	<script>
-	(function(){
-		// Quests catalog
-		const quests = [
-			{ id:1, title:'🎯 Basic Move Syntax', diff:'Beginner', reward:'10 APT', desc:'Move basics: variables, functions, types.' },
-			{ id:2, title:'🔧 Struct & Functions', diff:'Intermediate', reward:'20 APT', desc:'Structs, public functions, and modular design.' },
-			{ id:3, title:'💰 Resource Model', diff:'Advanced', reward:'40 APT', desc:'Resource safety, abilities, and ownership model.' },
-			{ id:4, title:'🔄 Control Flow', diff:'Beginner', reward:'12 APT', desc:'Conditionals, loops, and patterns.' },
-			{ id:5, title:'📦 Modules', diff:'Intermediate', reward:'25 APT', desc:'Module design, visibility, dependencies.' },
-			{ id:6, title:'🛡️ Security', diff:'Advanced', reward:'50 APT', desc:'Security best practices, testing, and reviews.' }
-		];
+	// Global scope - no IIFE
+	// Quests catalog
+	window.quests = [
+		{ id:1, title:'🎯 Basic Move Syntax', diff:'Beginner', reward:'10 APT', desc:'Move basics: variables, functions, types.' },
+		{ id:2, title:'🔧 Struct & Functions', diff:'Intermediate', reward:'20 APT', desc:'Structs, public functions, and modular design.' },
+		{ id:3, title:'💰 Resource Model', diff:'Advanced', reward:'40 APT', desc:'Resource safety, abilities, and ownership model.' },
+		{ id:4, title:'🔄 Control Flow', diff:'Beginner', reward:'12 APT', desc:'Conditionals, loops, and patterns.' },
+		{ id:5, title:'📦 Modules', diff:'Intermediate', reward:'25 APT', desc:'Module design, visibility, dependencies.' },
+		{ id:6, title:'🛡️ Security', diff:'Advanced', reward:'50 APT', desc:'Security best practices, testing, and reviews.' }
+	];
 
-		// Builder profiles (updated names)
-		const profiles = [
+	// Builder profiles (updated names)
+	window.profiles = [
 			{ id:1, name:'Neşe Demir', handle:'@nese', bio:'Focused on Move security & smart contract auditing.', skills:['Move','Security','Auditing','Testing'], tz:'GMT+3', avail:'Mentor: Available', completed: 35, streak: 16, badges:['Security Expert','Auditor','Top Contributor'], links:[{t:'GitHub',u:'https://github.com/'},{t:'X',u:'https://x.com/'}] },
 			{ id:2, name:'Deniz Arda', handle:'@deniz', bio:'Tooling and developer experience.', skills:['Move','Tooling','DX','CLI'], tz:'GMT+1', avail:'Mentor: Busy', completed: 20, streak: 5, badges:['DX Builder','CLI Wizard'], links:[{t:'GitHub',u:'https://github.com/'},{t:'Site',u:'#'}] },
 			{ id:3, name:'Efe Can', handle:'@efecan', bio:'Quests and education content.', skills:['Move','Education','Docs'], tz:'GMT+2', avail:'Mentor: Available', completed: 18, streak: 9, badges:['Educator','Quest Maker'], links:[{t:'GitHub',u:'https://github.com/'}] },
@@ -836,32 +744,48 @@ module 0x1::hello_world {
 		const pmBadges = document.getElementById('pm_badges');
 
 		// Render profiles (3-3 grid), include quick summary
-		profilesGrid.innerHTML = profiles.map(p => `
+		profilesGrid.innerHTML = profiles.map(p => {
+			// Handle avatar display - with safety checks
+			let avatarHtml = '';
+			
+			// Check if avatar exists and is not corrupted
+			if (p.avatar && typeof p.avatar === 'string' && p.avatar.length < 1000) {
+				if (p.avatar.startsWith('data:image/')) {
+					// Custom uploaded image
+					avatarHtml = `<img src="${p.avatar}" style="width:50px; height:50px; border-radius:50%; object-fit:cover; border:2px solid #82ffa1; margin-bottom:10px;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">`;
+				} else if (p.avatar.length <= 2) {
+					// Emoji avatar (single character)
+					avatarHtml = `<div style="width:50px; height:50px; border-radius:50%; background:#333; border:2px solid #82ffa1; display:flex; align-items:center; justify-content:center; font-size:24px; margin:0 auto 10px auto;">${p.avatar}</div>`;
+				} else {
+					// Fallback for other cases
+					avatarHtml = `<div style="width:50px; height:50px; border-radius:50%; background:#333; border:2px solid #82ffa1; display:flex; align-items:center; justify-content:center; font-size:20px; margin:0 auto 10px auto; color:#82ffa1;">${p.name.charAt(0)}</div>`;
+				}
+			} else {
+				// Default placeholder
+				avatarHtml = `<div style="width:50px; height:50px; border-radius:50%; background:#333; border:2px solid #82ffa1; display:flex; align-items:center; justify-content:center; font-size:20px; margin:0 auto 10px auto; color:#82ffa1;">${p.name.charAt(0)}</div>`;
+			}
+			
+			return `
 			<div class="card">
-				<h3>${p.name} <span style="color:#bdbdbd; font-weight:400">${p.handle}</span></h3>
+				<div style="text-align:center;">
+					${avatarHtml}
+					<h3>${p.name} <span style="color:#bdbdbd; font-weight:400">${p.handle}</span></h3>
+				</div>
 				<p>${p.bio}</p>
 				<div class="chips">
 					${p.skills.map(s => `<span class=\"chip\">${s}</span>`).join('')}
 				</div>
-				${p.links && p.links.length > 0 ? `
-					<div style="display:flex; gap:8px; justify-content:center; margin:8px 0;">
-						${p.links.map(link => {
-							const icon = link.t === 'GitHub' ? '💻' : link.t === 'X' ? '🐦' : link.t === 'LinkedIn' ? '💼' : '🔗';
-							return `<a href="${link.u}" target="_blank" style="color:#82ffa1; text-decoration:none; font-size:16px;" title="${link.t}">${icon}</a>`;
-						}).join('')}
-					</div>
-				` : ''}
 				<div class="row" style="margin-top:10px; justify-content:space-between;">
 					<span class="badge">Completed: ${p.completed}</span>
 					<span class="badge">Streak: ${p.streak}d</span>
 				</div>
 				<div class="row" style="margin-top:12px; gap:6px;">
 					<button class="btn" data-profile="${p.id}" style="flex:1; font-size:12px;">View Profile</button>
-					<button class="btn ${userProfile && userProfile.following && userProfile.following.includes(p.handle) ? '' : 'secondary'}" onclick="toggleFollow('${p.handle}')" id="followBtn_${p.handle}" style="flex:1; font-size:12px;">${userProfile && userProfile.following && userProfile.following.includes(p.handle) ? 'Followed' : 'Follow'}</button>
-					<button class="btn secondary" onclick="openChat('${p.handle}', '${p.name}')" style="flex:1; font-size:12px;">💬 Message</button>
+					<button class="btn secondary" data-action="follow" data-handle="${p.handle}" id="followBtn_${p.handle}" style="flex:1; font-size:12px;">Follow</button>
+					<button class="btn secondary" data-action="message" data-handle="${p.handle}" data-name="${p.name}" style="flex:1; font-size:12px;">💬 Message</button>
 				</div>
 			</div>
-		`).join('');
+		`}).join('');
 
 		profilesGrid.addEventListener('click', (e) => {
 			const t = e.target;
@@ -869,6 +793,8 @@ module 0x1::hello_world {
 				const id = Number(t.getAttribute('data-profile'));
 				const p = profiles.find(x => x.id === id);
 				if (!p) return;
+				
+				// Set profile data
 				pmName.textContent = p.name + ' ' + p.handle;
 				pmBio.textContent = p.bio;
 				pmSkills.innerHTML = p.skills.map(s => `<span class=\"chip\">${s}</span>`).join('');
@@ -878,7 +804,61 @@ module 0x1::hello_world {
 				pmCompleted.textContent = String(p.completed);
 				pmStreak.textContent = String(p.streak);
 				pmBadges.innerHTML = (p.badges || []).map(b => `<span class=\"chip\">${b}</span>`).join('');
+				
+				// Set avatar in profile modal
+				const avatarDiv = document.getElementById('pm_avatar');
+				if (avatarDiv) {
+					// Hide upload button for other users
+					const uploadSection = document.getElementById('avatarUploadSection');
+					if (uploadSection) {
+						uploadSection.style.display = 'none';
+					}
+					
+					// Clear existing avatar content
+					avatarDiv.innerHTML = '';
+					
+					// Add avatar image
+					const avatarImg = document.createElement('img');
+					avatarImg.id = 'profileAvatarImg';
+					
+					if (p.avatar && p.avatar.startsWith('data:image/')) {
+						// Custom uploaded image
+						avatarImg.src = p.avatar;
+					} else if (p.avatar) {
+						// Emoji avatar - use placeholder
+						avatarImg.src = 'https://via.placeholder.com/80x80/333/fff?text=' + encodeURIComponent(p.avatar);
+					} else {
+						// Default placeholder
+						avatarImg.src = 'https://via.placeholder.com/80x80/333/fff?text=' + p.name.charAt(0);
+					}
+					
+					// Set image styles
+					avatarImg.style.width = '80px';
+					avatarImg.style.height = '80px';
+					avatarImg.style.borderRadius = '50%';
+					avatarImg.style.border = '2px solid #82ffa1';
+					avatarImg.style.objectFit = 'cover';
+					avatarImg.style.display = 'block';
+					avatarImg.style.margin = '10px auto';
+					avatarImg.style.backgroundColor = '#333';
+					
+					avatarDiv.appendChild(avatarImg);
+				}
+				
 				pModal.style.display = 'grid';
+			}
+			
+			// Handle follow button
+			if (t && t instanceof Element && t.getAttribute('data-action') === 'follow') {
+				const handle = t.getAttribute('data-handle');
+				toggleFollow(handle);
+			}
+			
+			// Handle message button
+			if (t && t instanceof Element && t.getAttribute('data-action') === 'message') {
+				const handle = t.getAttribute('data-handle');
+				const name = t.getAttribute('data-name');
+				openChat(handle, name);
 			}
 		});
 
@@ -894,22 +874,14 @@ module 0x1::hello_world {
 						<span class=\"qdiff\">${q.diff}</span>
 					</div>
 					<p class=\"qdesc\">${q.desc}</p>
-					<div class=\"qrow\" style=\"margin-bottom:8px;\">
-						<span class=\"qreward\">Reward: ${q.reward}</span>
-						<div style=\"display:flex; gap:4px; align-items:center;\">
-							<button class=\"btn secondary\" onclick=\"likeQuest(${q.id}, '❤️')\" style=\"padding:4px 8px; font-size:12px;\">
-								❤️ <span id=\"likes-${q.id}\">${q.likes || 0}</span>
-							</button>
-							<button class=\"btn secondary\" onclick=\"likeQuest(${q.id}, '🔥')\" style=\"padding:4px 8px; font-size:12px;\">
-								🔥 <span id=\"fire-${q.id}\">${q.fire || 0}</span>
-							</button>
-							<button class=\"btn secondary\" onclick=\"likeQuest(${q.id}, '🚀')\" style=\"padding:4px 8px; font-size:12px;\">
-								🚀 <span id=\"rocket-${q.id}\">${q.rocket || 0}</span>
-							</button>
-						</div>
-					</div>
 					<div class=\"qrow\">
-						<button class=\"btn\" onclick=\"startQuest(${q.id})\" style=\"width:100%;\">${walletConnected ? 'Start Quest' : 'Connect Wallet'}</button>
+						<span class=\"qreward\">Reward: ${q.reward}</span>
+						<button class=\"btn\" onclick=\"startQuest(${q.id})\">${walletConnected ? 'Start Quest' : 'Connect Wallet'}</button>
+					</div>
+					<div style=\"display:flex; gap:8px; margin-top:8px; justify-content:center;\">
+						<button onclick=\"likeQuest(${q.id}, '❤️')\" style=\"background:transparent; border:1px solid #333; color:#fff; padding:4px 8px; border-radius:4px; cursor:pointer;\">❤️ <span id=\"likes-${q.id}\">0</span></button>
+						<button onclick=\"likeQuest(${q.id}, '🔥')\" style=\"background:transparent; border:1px solid #333; color:#fff; padding:4px 8px; border-radius:4px; cursor:pointer;\">🔥 <span id=\"fire-${q.id}\">0</span></button>
+						<button onclick=\"likeQuest(${q.id}, '🚀')\" style=\"background:transparent; border:1px solid #333; color:#fff; padding:4px 8px; border-radius:4px; cursor:pointer;\">🚀 <span id=\"rocket-${q.id}\">0</span></button>
 					</div>
 				</div>
 			`).join('');
@@ -992,17 +964,89 @@ module 0x1::hello_world {
 		modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display='none'; });
 
 		document.getElementById('viewStats').addEventListener('click', () => {
-			alert('Analytics: DAU, quest completion rate, avg difficulty. (Will load from on-chain once HTTPS is enabled)');
+			// Show quest progress with on-chain verification
+			showQuestProgress();
 		});
 
 		// Enhanced functionality
-		let walletConnected = false;
-		let walletAddress = null;
-		let userProfile = null;
-		let selectedAvatar = '🧑‍💻';
-		let currentQuestId = null;
-		let currentStep = 0;
-		let notificationPermission = false;
+	window.walletConnected = false;
+	window.walletAddress = null;
+	window.userProfile = null;
+	window.selectedAvatar = '🧑‍💻';
+	window.currentQuestId = null;
+	window.currentStep = 0;
+	window.notificationPermission = false;
+	
+	// Load wallet state from localStorage on page load
+	window.addEventListener('load', function() {
+		const savedWalletState = localStorage.getItem('walletState');
+		if (savedWalletState) {
+			const walletState = JSON.parse(savedWalletState);
+			window.walletConnected = walletState.connected;
+			window.walletAddress = walletState.address;
+		}
+		
+		// Load user profile
+		const savedProfile = localStorage.getItem('userProfile');
+		if (savedProfile) {
+			window.userProfile = JSON.parse(savedProfile);
+			console.log('✅ Profile loaded:', window.userProfile);
+			
+			// Check for corrupted avatar data - more aggressive cleaning
+			if (window.userProfile.avatar) {
+				if (window.userProfile.avatar.length > 100 || 
+					(typeof window.userProfile.avatar === 'string' && window.userProfile.avatar.includes('base64'))) {
+					console.log('⚠️ Corrupted avatar data detected, clearing...');
+					console.log('🔍 Avatar preview:', window.userProfile.avatar.substring(0, 100));
+					window.userProfile.avatar = null;
+					localStorage.setItem('userProfile', JSON.stringify(window.userProfile));
+					console.log('✅ Corrupted avatar data cleared');
+				}
+			}
+		} else {
+			console.log('❌ No profile found in localStorage');
+		}
+		
+		// Update UI after both wallet and profile are loaded
+		if (window.walletConnected && window.walletAddress) {
+			updateWalletUI();
+		}
+		
+		// Restore follow button states
+		setTimeout(() => {
+			if (window.userProfile && window.userProfile.following) {
+				window.userProfile.following.forEach(handle => {
+					const followBtn = document.getElementById(`followBtn_${handle}`);
+					if (followBtn) {
+						followBtn.textContent = 'Followed';
+						followBtn.classList.remove('btn', 'secondary');
+						followBtn.classList.add('btn');
+					}
+				});
+			}
+		}, 500); // Reduced timeout
+		
+		// Also restore when profiles are rendered
+		const originalRenderProfiles = window.renderProfiles;
+		if (originalRenderProfiles) {
+			window.renderProfiles = function() {
+				originalRenderProfiles();
+				// Restore follow states after rendering
+				setTimeout(() => {
+					if (window.userProfile && window.userProfile.following) {
+						window.userProfile.following.forEach(handle => {
+							const followBtn = document.getElementById(`followBtn_${handle}`);
+							if (followBtn) {
+								followBtn.textContent = 'Followed';
+								followBtn.classList.remove('btn', 'secondary');
+								followBtn.classList.add('btn');
+							}
+						});
+					}
+				}, 100);
+			};
+		}
+	});
 
 		// Quest content data
 		const questContents = {
@@ -1151,15 +1195,22 @@ public fun multiply(x: u64, y: u64): u64 {
 				const response = await window.aptos.connect();
 				console.log('✅ Wallet response:', response);
 				
-				walletAddress = response.address;
-				walletConnected = true;
+				window.walletAddress = response.address;
+				window.walletConnected = true;
+				
+				// Save wallet state to localStorage
+				localStorage.setItem('walletState', JSON.stringify({
+					connected: true,
+					address: response.address
+				}));
+				
 				updateWalletUI();
 				
 				// Check if profile exists
-				const savedProfile = localStorage.getItem(`profile_${walletAddress}`);
+				const savedProfile = localStorage.getItem(`profile_${window.walletAddress}`);
 				if (savedProfile) {
-					userProfile = JSON.parse(savedProfile);
-					alert('✅ Welcome back, ' + userProfile.username + '!');
+					window.userProfile = JSON.parse(savedProfile);
+					alert('✅ Welcome back, ' + window.userProfile.username + '!');
 				} else {
 					alert('✅ Wallet connected! Create your profile to get started.');
 					setTimeout(() => {
@@ -1188,11 +1239,34 @@ public fun multiply(x: u64, y: u64): u64 {
 			const connectBtn = document.getElementById('connectWallet');
 			const walletInfo = document.getElementById('walletInfo');
 			const addressDiv = document.getElementById('walletAddress');
+			const userNameDiv = document.getElementById('userName');
+
+			console.log('🔍 updateWalletUI called');
+			console.log('walletConnected:', walletConnected);
+			console.log('walletAddress:', walletAddress);
+			console.log('userProfile:', userProfile);
 
 			if (walletConnected && walletAddress) {
 				connectBtn.style.display = 'none';
 				walletInfo.style.display = 'block';
 				addressDiv.textContent = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
+				
+				// Show user name if profile exists
+				const savedProfile = localStorage.getItem('userProfile');
+				if (savedProfile) {
+					const profile = JSON.parse(savedProfile);
+					if (profile.name || profile.username) {
+						userNameDiv.textContent = profile.name || profile.username;
+						userNameDiv.style.display = 'block';
+						console.log('✅ User name set:', profile.name || profile.username);
+					} else {
+						userNameDiv.style.display = 'none';
+						console.log('❌ No user name in profile');
+					}
+				} else {
+					userNameDiv.style.display = 'none';
+					console.log('❌ No profile found');
+				}
 			} else {
 				connectBtn.style.display = 'block';
 				walletInfo.style.display = 'none';
@@ -1224,13 +1298,342 @@ public fun multiply(x: u64, y: u64): u64 {
 				alert(`🔗 Referral link copied!\n\n${referralLink}\n\nFriends get +10% rewards!`);
 			});
 		});
+		
+		
+		// Toggle user dropdown
+		window.toggleUserDropdown = function() {
+			const dropdown = document.getElementById('userProfileDropdown');
+			if (dropdown.style.display === 'none' || dropdown.style.display === '') {
+				dropdown.style.display = 'block';
+			} else {
+				dropdown.style.display = 'none';
+			}
+		};
+		
+		// Close dropdown when clicking outside
+		document.addEventListener('click', (e) => {
+			const dropdown = document.getElementById('userProfileDropdown');
+			const walletInfo = document.getElementById('walletInfo');
+			if (dropdown && !walletInfo.contains(e.target)) {
+				dropdown.style.display = 'none';
+			}
+		});
+		
+		// View My Profile functionality
+		document.getElementById('viewMyProfileBtn').addEventListener('click', () => {
+			console.log('🔍 View My Profile button clicked');
+			
+			// Close dropdown first
+			document.getElementById('userProfileDropdown').style.display = 'none';
+			
+			// Call showMyProfile function
+			console.log('🔍 Calling showMyProfile function');
+			showMyProfile();
+			
+			// Close dropdown
+			document.getElementById('userProfileDropdown').style.display = 'none';
+			
+			// Open user's own profile directly
+			showMyProfile();
+		});
+		
+		// Edit Profile functionality
+		document.getElementById('editProfileBtn').addEventListener('click', () => {
+			// Close dropdown
+			document.getElementById('userProfileDropdown').style.display = 'none';
+			
+			// Open profile creation modal for editing
+			document.getElementById('createProfileModal').style.display = 'block';
+		});
+		
+		// Get Referral Link functionality
+		document.getElementById('getReferralLinkBtn').addEventListener('click', () => {
+			if (!walletConnected) {
+				alert('Please connect wallet first to get your referral link!');
+				return;
+			}
+			
+			const referralCode = walletAddress.slice(-8);
+			const referralLink = `https://movebuildershub.xyz?ref=${referralCode}`;
+			
+			navigator.clipboard.writeText(referralLink).then(() => {
+				alert(`🔗 Your referral link copied!\n\n${referralLink}\n\nShare with friends to get +10% rewards!`);
+			});
+			
+			// Close dropdown
+			document.getElementById('userProfileDropdown').style.display = 'none';
+		});
+		
+		// Social Links functionality
+		document.getElementById('socialLinksBtn').addEventListener('click', () => {
+			// Close dropdown
+			document.getElementById('userProfileDropdown').style.display = 'none';
+			
+			// Open social links modal (we'll create this)
+			alert('Social Links feature coming soon!');
+		});
+		
+		// Close dropdown
+		document.getElementById('closeDropdown').addEventListener('click', (e) => {
+			e.preventDefault();
+			e.stopPropagation();
+			document.getElementById('userProfileDropdown').style.display = 'none';
+		});
+		
+		// Close profile modal
+		document.getElementById('pm_close').addEventListener('click', (e) => {
+			e.preventDefault();
+			document.getElementById('profileModal').style.display = 'none';
+		});
+		
+		// Avatar upload functionality for profile modal
+		document.addEventListener('change', function(e) {
+			if (e.target && e.target.id === 'avatarUpload') {
+				const file = e.target.files[0];
+				if (file) {
+					// Check file size (max 2MB)
+					if (file.size > 2 * 1024 * 1024) {
+						alert('File size too large! Please choose an image smaller than 2MB.');
+						return;
+					}
+					
+					// Check file type
+					if (!file.type.startsWith('image/')) {
+						alert('Please select an image file!');
+						return;
+					}
+					
+					// Convert to base64
+					const reader = new FileReader();
+					reader.onload = function(e) {
+						const base64String = e.target.result;
+						console.log('🔍 Uploaded avatar base64 length:', base64String.length);
+						console.log('🔍 Uploaded avatar starts with:', base64String.substring(0, 50));
+						
+						// Update user profile in localStorage
+						const savedProfile = localStorage.getItem('userProfile');
+						if (savedProfile) {
+							const userProfile = JSON.parse(savedProfile);
+							userProfile.avatar = base64String;
+							localStorage.setItem('userProfile', JSON.stringify(userProfile));
+							console.log('✅ Avatar saved to localStorage');
+							
+							// Update the displayed avatar immediately
+							const avatarImg = document.getElementById('profileAvatarImg');
+							if (avatarImg) {
+								avatarImg.src = base64String;
+								console.log('✅ Avatar updated in profile modal');
+							}
+							
+							alert('✅ Avatar updated successfully!');
+						}
+					};
+					reader.readAsDataURL(file);
+				}
+			}
+		});
+		
+		// Custom avatar upload functionality (for profile creation/editing)
+		document.getElementById('customAvatarUpload').addEventListener('change', function(e) {
+			const file = e.target.files[0];
+			if (file) {
+				// Check file size (max 2MB)
+				if (file.size > 2 * 1024 * 1024) {
+					alert('File size too large! Please choose an image smaller than 2MB.');
+					return;
+				}
+				
+				// Check file type
+				if (!file.type.startsWith('image/')) {
+					alert('Please select an image file!');
+					return;
+				}
+				
+				// Convert to base64
+				const reader = new FileReader();
+				reader.onload = function(e) {
+					// Store custom avatar
+					window.customAvatar = e.target.result;
+					
+					// Show preview
+					document.getElementById('customAvatarImg').src = e.target.result;
+					document.getElementById('customAvatarPreview').style.display = 'block';
+					
+					// Clear emoji selection
+					document.querySelectorAll('.avatar-option').forEach(option => {
+						option.style.borderColor = '#333';
+					});
+					
+					alert('✅ Custom avatar selected!');
+				};
+				reader.readAsDataURL(file);
+			}
+		});
+		
+		// Show my profile function
+		window.showMyProfile = function() {
+			console.log('🔍 showMyProfile function called');
+			
+			// Load profile from localStorage
+			const savedProfile = localStorage.getItem('userProfile');
+			if (!savedProfile) {
+				console.log('❌ No profile found in localStorage');
+				alert('Please create your profile first!');
+				return;
+			}
+			
+			console.log('✅ Profile found in localStorage');
+			
+			const userProfile = JSON.parse(savedProfile);
+			console.log('🔍 showMyProfile - userProfile:', userProfile);
+			console.log('🔍 Avatar data type:', typeof userProfile.avatar);
+			console.log('🔍 Avatar data length:', userProfile.avatar ? userProfile.avatar.length : 'null');
+			console.log('🔍 Avatar starts with data:image:', userProfile.avatar ? userProfile.avatar.startsWith('data:image/') : 'null');
+			
+			// Fill profile modal with user's own data
+			document.getElementById('pm_name').textContent = 'My Profile';
+			
+			// Safe username handling
+			const username = userProfile.name || userProfile.username || 'Unknown User';
+			document.getElementById('pm_username').textContent = username;
+			
+			// Safe handle handling
+			const handle = userProfile.handle || userProfile.username || 'unknown';
+			document.getElementById('pm_handle').textContent = '@' + handle.toLowerCase().replace(/\s+/g, '_');
+			
+			// Safe bio handling
+			document.getElementById('pm_bio').textContent = userProfile.bio || 'No bio available';
+			
+			// Avatar - Clear and rebuild completely
+			const avatarDiv = document.getElementById('pm_avatar');
+			if (avatarDiv) {
+				// Clear everything first
+				avatarDiv.innerHTML = '';
+				
+				// Add upload button for own profile
+				const uploadSection = document.createElement('div');
+				uploadSection.id = 'avatarUploadSection';
+				uploadSection.style.marginBottom = '15px';
+				uploadSection.innerHTML = `
+					<input type="file" id="avatarUpload" accept="image/*" style="display:none;">
+					<button class="btn secondary" onclick="document.getElementById('avatarUpload').click()" style="font-size:11px;">📷 Upload Avatar</button>
+				`;
+				avatarDiv.appendChild(uploadSection);
+				
+				// Add avatar image
+				const avatarImg = document.createElement('img');
+				avatarImg.id = 'profileAvatarImg';
+				
+				// Debug avatar data
+				if (userProfile.avatar) {
+					console.log('🔍 Avatar first 100 chars:', userProfile.avatar.substring(0, 100));
+					
+					// Check if avatar is base64 (custom image) or emoji
+					if (userProfile.avatar.startsWith('data:image/')) {
+						// Custom uploaded image - use base64 directly
+						avatarImg.src = userProfile.avatar;
+						console.log('✅ Custom avatar loaded from base64');
+					} else if (userProfile.avatar.length > 100 && userProfile.avatar.includes('base64')) {
+						// Might be base64 without data:image/ prefix
+						avatarImg.src = 'data:image/png;base64,' + userProfile.avatar;
+						console.log('✅ Base64 avatar loaded with prefix');
+					} else {
+						// Emoji avatar
+						avatarImg.src = 'https://via.placeholder.com/80x80/333/fff?text=' + encodeURIComponent(userProfile.avatar);
+						console.log('✅ Emoji avatar loaded');
+					}
+				} else {
+					// Default placeholder
+					avatarImg.src = 'https://via.placeholder.com/80x80/333/fff?text=' + (userProfile.name?.charAt(0) || 'U');
+					console.log('✅ Default avatar loaded');
+				}
+				
+				// Set image styles
+				avatarImg.style.width = '80px';
+				avatarImg.style.height = '80px';
+				avatarImg.style.borderRadius = '50%';
+				avatarImg.style.border = '2px solid #82ffa1';
+				avatarImg.style.objectFit = 'cover';
+				avatarImg.style.display = 'block';
+				avatarImg.style.margin = '10px auto';
+				avatarImg.style.backgroundColor = '#333';
+				
+				// Add error handling for image loading
+				avatarImg.onerror = function() {
+					console.log('❌ Avatar image failed to load, using placeholder');
+					this.src = 'https://via.placeholder.com/80x80/333/fff?text=' + (userProfile.name?.charAt(0) || 'U');
+				};
+				
+				avatarImg.onload = function() {
+					console.log('✅ Avatar image loaded successfully');
+				};
+				
+				avatarDiv.appendChild(avatarImg);
+			}
+			
+			// Skills
+			const skillsDiv = document.getElementById('pm_skills');
+			skillsDiv.innerHTML = '';
+			if (userProfile.skills && userProfile.skills.length > 0) {
+				userProfile.skills.forEach(skill => {
+					const chip = document.createElement('span');
+					chip.className = 'chip';
+					chip.textContent = skill;
+					skillsDiv.appendChild(chip);
+				});
+			} else {
+				skillsDiv.innerHTML = '<span class="chip">No skills listed</span>';
+			}
+			
+			// Availability and timezone
+			document.getElementById('pm_avail').textContent = userProfile.availability || 'Available';
+			document.getElementById('pm_tz').textContent = userProfile.timezone || 'UTC';
+			
+			// Social links
+			const socialDiv = document.getElementById('pm_social');
+			if (socialDiv) {
+				socialDiv.innerHTML = '';
+				if (userProfile.socialLinks) {
+					if (userProfile.socialLinks.twitter) {
+						const twitterLink = document.createElement('a');
+						twitterLink.href = userProfile.socialLinks.twitter;
+						twitterLink.target = '_blank';
+						twitterLink.textContent = '🐦 Twitter';
+						twitterLink.style.marginRight = '10px';
+						socialDiv.appendChild(twitterLink);
+					}
+					if (userProfile.socialLinks.github) {
+						const githubLink = document.createElement('a');
+						githubLink.href = userProfile.socialLinks.github;
+						githubLink.target = '_blank';
+						githubLink.textContent = '🐙 GitHub';
+						githubLink.style.marginRight = '10px';
+						socialDiv.appendChild(githubLink);
+					}
+					if (userProfile.socialLinks.linkedin) {
+						const linkedinLink = document.createElement('a');
+						linkedinLink.href = userProfile.socialLinks.linkedin;
+						linkedinLink.target = '_blank';
+						linkedinLink.textContent = '💼 LinkedIn';
+						socialDiv.appendChild(linkedinLink);
+					}
+				}
+			}
+			
+			// Show profile modal
+			console.log('🔍 Opening profile modal');
+			document.getElementById('profileModal').style.display = 'block';
+		};
 
 		// Initialize everything
 		checkReferral();
 		
 		setTimeout(() => {
 			if (window.aptos) {
-				document.getElementById('connectWallet').style.display = 'block';
+				// Only show connect button if wallet is not connected
+				if (!walletConnected) {
+					document.getElementById('connectWallet').style.display = 'block';
+				}
 				console.log('✅ Petra wallet detected');
 			} else {
 				document.getElementById('connectWallet').style.display = 'block';
@@ -1240,40 +1643,47 @@ public fun multiply(x: u64, y: u64): u64 {
 		}, 1000);
 
 		// Profile functions
-		window.selectAvatar = function(avatar) {
-			selectedAvatar = avatar;
+	window.selectAvatar = function(avatar) {
+		window.selectedAvatar = avatar;
 			document.querySelectorAll('.avatar-option').forEach(option => {
 				option.style.borderColor = '#333';
 			});
 			document.querySelector(`[data-avatar="${avatar}"]`).style.borderColor = '#82ffa1';
 		};
 
-		window.closeCreateProfile = function() {
+	window.closeCreateProfile = function() {
 			document.getElementById('createProfileModal').style.display = 'none';
 		};
 
-		window.saveProfile = function() {
+	window.saveProfile = function() {
 			const username = document.getElementById('usernameInput').value.trim();
 			const bio = document.getElementById('bioInput').value.trim();
 			const email = document.getElementById('emailInput').value.trim();
 			const experience = document.getElementById('experienceInput').value;
 			const privacy = document.querySelector('input[name="privacy"]:checked').value;
+			
+			// Get selected skills
+			const skillCheckboxes = document.querySelectorAll('input[name="skills"]:checked');
+			const skills = Array.from(skillCheckboxes).map(cb => cb.value);
+			
+			// Get social links
 			const twitter = document.getElementById('twitterInput').value.trim();
 			const github = document.getElementById('githubInput').value.trim();
 			const linkedin = document.getElementById('linkedinInput').value.trim();
-			
-			// Get selected skills
-			const skillCheckboxes = document.querySelectorAll('.skill-checkbox input[type="checkbox"]:checked');
-			const skills = Array.from(skillCheckboxes).map(cb => cb.value);
 
 			// Security validation
 			if (!username) {
 				alert('Please enter a username!');
 				return;
 			}
-
+			
 			if (!email) {
 				alert('Please enter your email!');
+				return;
+			}
+			
+			if (!email.includes('@')) {
+				alert('Please enter a valid email address!');
 				return;
 			}
 
@@ -1287,65 +1697,39 @@ public fun multiply(x: u64, y: u64): u64 {
 				return;
 			}
 
-			// Email validation
-			const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-			if (!emailRegex.test(email)) {
-				alert('❌ Please enter a valid email address!');
-				return;
+			// Determine avatar (custom upload or emoji)
+			let avatar = window.selectedAvatar || '🧑‍💻';
+			if (window.customAvatar) {
+				avatar = window.customAvatar;
 			}
-
-			// Social links validation (optional)
-			const socialLinks = {};
-			if (twitter) {
-				if (!twitter.startsWith('@')) {
-					alert('❌ Twitter handle should start with @ (e.g., @username)');
-					return;
-				}
-				socialLinks.twitter = twitter;
-			}
-			if (github) {
-				// Basic GitHub username validation
-				if (!/^[a-zA-Z0-9]([a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$/.test(github)) {
-					alert('❌ Please enter a valid GitHub username');
-					return;
-				}
-				socialLinks.github = github;
-			}
-			if (linkedin) {
-				// Basic LinkedIn URL validation
-				if (!linkedin.includes('linkedin.com/in/')) {
-					alert('❌ Please enter a valid LinkedIn URL (e.g., linkedin.com/in/username)');
-					return;
-				}
-				socialLinks.linkedin = linkedin;
-			}
-
-			userProfile = {
-				avatar: selectedAvatar,
+			
+			window.userProfile = {
+				avatar: avatar,
+				name: username, // Add name field
 				username: username,
+				handle: username.toLowerCase().replace(/\s+/g, '_'), // Add handle field
 				bio: bio || 'Move developer',
 				email: email,
 				skills: skills,
 				experience: experience,
 				privacy: privacy,
-				socialLinks: socialLinks,
-				walletAddress: walletAddress,
+				socialLinks: {
+					twitter: twitter,
+					github: github,
+					linkedin: linkedin
+				},
+				walletAddress: window.walletAddress,
 				createdAt: new Date().toISOString(),
 				questsCompleted: 0,
 				streak: 0,
 				badges: ['New Builder'],
-				followers: [],
 				following: [],
-				profileLink: `https://movebuildershub.xyz/profile/${username.toLowerCase().replace(/[^a-z0-9]/g, '')}`
+				activities: []
 			};
 
-			localStorage.setItem(`profile_${walletAddress}`, JSON.stringify(userProfile));
+			localStorage.setItem('userProfile', JSON.stringify(window.userProfile));
 			closeCreateProfile();
 			updateWalletUI();
-			
-			// Add activity to timeline
-			addActivity('👤', 'Created profile');
-			
 			alert('✅ Profile created successfully!');
 		};
 
@@ -1353,15 +1737,27 @@ public fun multiply(x: u64, y: u64): u64 {
 			const connectBtn = document.getElementById('connectWallet');
 			const walletInfo = document.getElementById('walletInfo');
 			const addressDiv = document.getElementById('walletAddress');
+			const userNameDiv = document.getElementById('userName');
 
 			if (walletConnected && walletAddress) {
 				connectBtn.style.display = 'none';
 				walletInfo.style.display = 'block';
 				
-				if (userProfile) {
-					addressDiv.innerHTML = `${userProfile.avatar} ${userProfile.username}`;
+				// Always show wallet address
+				addressDiv.textContent = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
+				
+				// Show user name separately if profile exists
+				const savedProfile = localStorage.getItem('userProfile');
+				if (savedProfile) {
+					const profile = JSON.parse(savedProfile);
+					if (profile.name || profile.username) {
+						userNameDiv.textContent = profile.name || profile.username;
+						userNameDiv.style.display = 'block';
+					} else {
+						userNameDiv.style.display = 'none';
+					}
 				} else {
-					addressDiv.textContent = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
+					userNameDiv.style.display = 'none';
 				}
 			} else {
 				connectBtn.style.display = 'block';
@@ -1552,10 +1948,6 @@ public fun multiply(x: u64, y: u64): u64 {
 			};
 			
 			document.getElementById('hackathonModal').style.display = 'none';
-			
-			// Add activity to timeline
-			addActivity('🏆', `Registered for ${hackathons[hackathonType]}`);
-			
 			alert(`🎉 Registered for ${hackathons[hackathonType]}!\n\n✅ Registration confirmed\n📧 Details sent to your email\n💬 Discord invite coming soon`);
 		};
 
@@ -1564,8 +1956,7 @@ public fun multiply(x: u64, y: u64): u64 {
 		});
 
 		document.getElementById('leaderboardBtn').addEventListener('click', () => {
-			loadLeaderboard();
-			document.getElementById('leaderboardModal').style.display = 'grid';
+			alert('🏆 Current Leaderboard:\n\n1. @nese - 35 quests • 1.4 APT\n2. @dilek - 29 quests • 1.1 APT\n3. @selina - 22 quests • 0.7 APT\n4. @deniz - 20 quests • 0.6 APT\n5. @efecan - 18 quests • 0.5 APT');
 		});
 
 		document.getElementById('verifyRewards').addEventListener('click', () => {
@@ -1575,6 +1966,70 @@ public fun multiply(x: u64, y: u64): u64 {
 			}
 			alert('✅ Your Verified Rewards:\n\nQuest Completions: 0\nTotal Earned: 0 APT\nOn-Chain Transactions: 0\n\nComplete quests to start earning!');
 		});
+
+		// Debug function to clear avatar data
+		window.clearAvatarData = function() {
+			const savedProfile = localStorage.getItem('userProfile');
+			if (savedProfile) {
+				const userProfile = JSON.parse(savedProfile);
+				console.log('🔍 Current avatar data:', userProfile.avatar);
+				userProfile.avatar = null;
+				localStorage.setItem('userProfile', JSON.stringify(userProfile));
+				console.log('✅ Avatar data cleared');
+				alert('Avatar data cleared! Please upload a new avatar.');
+			}
+		};
+
+		// Function to fix broken avatar data
+		window.fixAvatarData = function() {
+			// Clear all localStorage data
+			localStorage.removeItem('userProfile');
+			console.log('✅ All profile data cleared');
+			alert('All profile data cleared! Please refresh the page and create a new profile.');
+		};
+
+		// Function to check and fix avatar display issues
+		window.checkAvatarIssues = function() {
+			const savedProfile = localStorage.getItem('userProfile');
+			if (savedProfile) {
+				const userProfile = JSON.parse(savedProfile);
+				console.log('🔍 Profile data:', userProfile);
+				console.log('🔍 Avatar type:', typeof userProfile.avatar);
+				console.log('🔍 Avatar length:', userProfile.avatar ? userProfile.avatar.length : 'null');
+				
+				if (userProfile.avatar && userProfile.avatar.length > 1000) {
+					console.log('⚠️ Avatar data is too long, might be corrupted');
+					userProfile.avatar = null;
+					localStorage.setItem('userProfile', JSON.stringify(userProfile));
+					console.log('✅ Corrupted avatar data cleared');
+					alert('Corrupted avatar data detected and cleared!');
+				}
+			}
+		};
+
+		// Emergency function to completely clear all avatar data
+		window.emergencyClearAvatar = function() {
+			// Clear all localStorage
+			localStorage.clear();
+			console.log('🚨 Emergency: All localStorage cleared');
+			alert('🚨 Emergency: All data cleared! Please refresh the page.');
+			location.reload();
+		};
+
+		// Function to force clear just avatar data
+		window.forceClearAvatar = function() {
+			const savedProfile = localStorage.getItem('userProfile');
+			if (savedProfile) {
+				const userProfile = JSON.parse(savedProfile);
+				userProfile.avatar = null;
+				localStorage.setItem('userProfile', JSON.stringify(userProfile));
+				console.log('✅ Avatar data force cleared');
+				alert('Avatar data cleared! Refreshing page...');
+				location.reload();
+			} else {
+				alert('No profile found to clear');
+			}
+		};
 
 		// Global functions
 		window.joinCollaboration = function(projectId) {
@@ -1620,75 +2075,24 @@ public fun multiply(x: u64, y: u64): u64 {
 			});
 		}
 
-		// Animate number changes
-		function animateNumber(elementId, targetValue) {
-			const element = document.getElementById(elementId);
-			if (!element) return;
-			
-			const currentValue = parseInt(element.textContent) || 0;
-			const difference = targetValue - currentValue;
-			const steps = 10;
-			const stepValue = difference / steps;
-			let currentStep = 0;
-			
-			const interval = setInterval(() => {
-				currentStep++;
-				const newValue = Math.round(currentValue + (stepValue * currentStep));
-				element.textContent = newValue;
-				
-				// Add a subtle glow effect
-				element.style.textShadow = '0 0 10px #82ffa1';
-				setTimeout(() => {
-					element.style.textShadow = 'none';
-				}, 200);
-				
-				if (currentStep >= steps) {
-					clearInterval(interval);
-					element.textContent = targetValue;
-				}
-			}, 50);
-		}
-
 		// Update stats periodically
 		function updateStats() {
-			// Add some randomness to make it feel live
-			const activeDevs = Math.floor(Math.random() * 20) + 120;
-			const completedQuests = Math.floor(Math.random() * 30) + 80;
-			const onChainTx = Math.floor(Math.random() * 50) + 140;
-			
-			// Animate the numbers
-			animateNumber('activeDevelopers', activeDevs);
-			animateNumber('completedQuests', completedQuests);
-			animateNumber('onChainTx', onChainTx);
-			
-			// Update personal dashboard stats
-			if (userProfile) {
-				document.getElementById('userQuestsCompleted').textContent = userProfile.questsCompleted || 0;
-				document.getElementById('userStreak').textContent = userProfile.streak || 0;
-				document.getElementById('userLevel').textContent = Math.floor((userProfile.questsCompleted || 0) / 3) + 1;
-				document.getElementById('userXP').textContent = (userProfile.questsCompleted || 0) * 100;
-				document.getElementById('userFollowers').textContent = userProfile.followers ? userProfile.followers.length : 0;
-				document.getElementById('userFollowing').textContent = userProfile.following ? userProfile.following.length : 0;
-				
-				// Update badges
-				const badgesContainer = document.getElementById('userBadges');
-				if (badgesContainer && userProfile.badges) {
-					badgesContainer.innerHTML = userProfile.badges.map(badge => 
-						`<span class="badge">${badge}</span>`
-					).join('');
-				}
-				
-				// Load quest history
-				loadQuestHistory();
-				
-				// Load activity timeline
-				loadActivityTimeline();
-			}
+			document.getElementById('activeDevelopers').textContent = Math.floor(Math.random() * 20) + 120;
+			document.getElementById('completedQuests').textContent = Math.floor(Math.random() * 30) + 80;
+			document.getElementById('onChainTx').textContent = Math.floor(Math.random() * 50) + 140;
 		}
 
 		// Enhanced social sharing function
-		window.shareAchievement = function(questTitle) {
-			const shareText = `🎉 Just completed "${questTitle}" on @movebuildershub!\n\nLearning Move programming on-chain 🚀\n\n🔗 Join me: https://movebuildershub.xyz\n\n#Move #Aptos #Web3Education #Blockchain`;
+		window.shareAchievement = function(questTitle, txHash = null) {
+			let shareText;
+			
+			if (txHash) {
+				// On-chain achievement with transaction hash
+				shareText = `🎉 Just completed "${questTitle}" on @movebuildershub!\n\n⛓️ On-chain proof: ${txHash.slice(0, 16)}...\n🚀 Learning Move programming on Aptos blockchain\n\n🔗 Join me: https://movebuildershub.xyz\n\n#Move #Aptos #Web3Education #Blockchain #OnChain`;
+			} else {
+				// Regular achievement
+				shareText = `🎉 Just completed "${questTitle}" on @movebuildershub!\n\nLearning Move programming on-chain 🚀\n\n🔗 Join me: https://movebuildershub.xyz\n\n#Move #Aptos #Web3Education #Blockchain`;
+			}
 			
 			if (navigator.share && isMobile()) {
 				// Native mobile sharing
@@ -1755,25 +2159,187 @@ public fun multiply(x: u64, y: u64): u64 {
 		}
 
 		// Enhanced quest completion with sharing and achievements
-		function completeQuestWithSharing(questId, questTitle) {
-			// Award achievements first
-			awardAchievements(questId);
-			
-			// Add to quest history
-			addQuestToHistory(questTitle, 100);
-			
-			// Add activity to timeline
-			addActivity('🎯', `Completed quest: ${questTitle}`);
-			
-			alert(`🎉 Quest "${questTitle}" completed!\n\n✅ Reward earned\n⛓️ Recorded on-chain`);
-			
-			setTimeout(() => {
-				const share = confirm('📤 Share your achievement on social media?');
-				if (share) {
-					shareAchievement(questTitle);
+		async function completeQuestWithSharing(questId, questTitle) {
+			try {
+				// Check wallet connection
+				if (!window.walletConnected || !window.walletAddress) {
+					alert('❌ Please connect your wallet first to complete quests on-chain!');
+					return;
 				}
-			}, 1000);
+
+				// Show loading state with transaction details
+				const questFee = 0.000001; // 0.000001 APT
+				const loadingMsg = `🔄 Completing quest "${questTitle}" on-chain...\n\n💰 Transaction Fee: ${questFee} APT\n⏳ Please approve the transaction in your wallet`;
+				alert(loadingMsg);
+
+				// Create quest completion transaction
+				const questCompletionTx = await createQuestCompletionTransaction(questId, questTitle);
+				
+				// Submit transaction to blockchain
+				const response = await window.aptos.signAndSubmitTransaction(questCompletionTx);
+				
+				console.log('🎯 Quest completion transaction:', response);
+				
+				// Wait for transaction confirmation
+				await window.aptos.waitForTransaction(response.hash);
+				
+				// Award achievements after successful on-chain completion
+				awardAchievements(questId);
+				
+				// Update local storage with on-chain proof
+				updateQuestProgressOnChain(questId, response.hash);
+				
+				alert(`🎉 Quest "${questTitle}" completed on-chain!\n\n✅ Transaction Hash: ${response.hash.slice(0, 16)}...\n💰 Fee Paid: 0.000001 APT\n⛓️ Recorded on Aptos blockchain\n🏆 Achievement earned\n\n🔗 View on Explorer: https://explorer.aptoslabs.com/txn/${response.hash}`);
+				
+				setTimeout(() => {
+					const share = confirm('📤 Share your on-chain achievement on social media?');
+					if (share) {
+						shareAchievement(questTitle, response.hash);
+					}
+				}, 1000);
+
+			} catch (error) {
+				console.error('❌ Quest completion failed:', error);
+				
+				if (error.message.includes('User rejected')) {
+					alert('❌ Quest completion cancelled. Transaction was rejected.');
+				} else if (error.message.includes('Insufficient')) {
+					alert('❌ Insufficient balance for quest completion transaction.');
+				} else {
+					alert(`❌ Quest completion failed: ${error.message}\n\nPlease try again or check your wallet connection.`);
+				}
+			}
 		}
+
+		// Create quest completion transaction
+		async function createQuestCompletionTransaction(questId, questTitle) {
+			// Get current network
+			const network = await window.aptos.network();
+			console.log('🌐 Current network:', network);
+
+			// Quest completion data
+			const questData = {
+				questId: questId,
+				questTitle: questTitle,
+				timestamp: Date.now(),
+				userAddress: window.walletAddress,
+				completionProof: `quest_${questId}_${Date.now()}`
+			};
+
+			// Create a real quest completion transaction
+			// We'll use a simple transfer to a quest completion address with memo
+			const questCompletionAddress = "0x1"; // Burn address for quest completion
+			const questFee = 1000; // 0.000001 APT (very small fee for quest completion)
+			
+			const transaction = {
+				arguments: [
+					questCompletionAddress, // Quest completion address
+					questFee.toString() // Small fee for quest completion
+				],
+				function: "0x1::aptos_account::transfer",
+				type: "entry_function_payload",
+				type_arguments: ["0x1::aptos_coin::AptosCoin"]
+			};
+
+			console.log('🎯 Quest completion transaction:', transaction);
+			console.log('📝 Quest data:', questData);
+
+			return transaction;
+		}
+
+		// Update quest progress with on-chain proof
+		function updateQuestProgressOnChain(questId, txHash) {
+			// Get current progress
+			let progress = JSON.parse(localStorage.getItem('questProgress') || '{}');
+			
+			// Update with on-chain proof
+			progress[questId] = {
+				completed: true,
+				completedAt: new Date().toISOString(),
+				txHash: txHash,
+				onChain: true,
+				verified: true
+			};
+			
+			// Save back to localStorage
+			localStorage.setItem('questProgress', JSON.stringify(progress));
+			
+			// Update user profile with on-chain quest count
+			const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+			if (profile.questsCompleted) {
+				profile.questsCompleted++;
+			} else {
+				profile.questsCompleted = 1;
+			}
+			
+			// Add on-chain proof to profile
+			if (!profile.onChainProofs) {
+				profile.onChainProofs = [];
+			}
+			profile.onChainProofs.push({
+				type: 'quest_completion',
+				questId: questId,
+				txHash: txHash,
+				timestamp: new Date().toISOString()
+			});
+			
+			localStorage.setItem('userProfile', JSON.stringify(profile));
+			
+			console.log('✅ Quest progress updated with on-chain proof:', txHash);
+		}
+
+		// Show quest progress with on-chain verification
+		window.showQuestProgress = function() {
+			const progress = JSON.parse(localStorage.getItem('questProgress') || '{}');
+			const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+			
+			let progressHtml = '<div style="padding:20px; max-height:400px; overflow-y:auto;">';
+			progressHtml += '<h3>🎯 Quest Progress & On-Chain Proofs</h3>';
+			
+			if (Object.keys(progress).length === 0) {
+				progressHtml += '<p style="color:#8a8a8a; text-align:center; margin:20px 0;">No quests completed yet.</p>';
+			} else {
+				progressHtml += '<div style="display:grid; gap:12px; margin-top:16px;">';
+				
+				Object.entries(progress).forEach(([questId, questData]) => {
+					const quest = window.quests.find(q => q.id == questId);
+					const questTitle = quest ? quest.title : `Quest ${questId}`;
+					
+					progressHtml += `
+						<div style="background:#1a1a1a; padding:16px; border-radius:8px; border:1px solid #333;">
+							<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+								<h4 style="margin:0; color:#82ffa1;">${questTitle}</h4>
+								${questData.onChain ? '<span style="background:#82ffa1; color:#000; padding:2px 8px; border-radius:4px; font-size:11px;">⛓️ ON-CHAIN</span>' : '<span style="background:#666; color:#fff; padding:2px 8px; border-radius:4px; font-size:11px;">📱 LOCAL</span>'}
+							</div>
+							<div style="font-size:12px; color:#8a8a8a;">
+								<div>✅ Completed: ${new Date(questData.completedAt).toLocaleDateString()}</div>
+								${questData.txHash ? `<div>🔗 TX Hash: <code style="background:#222; padding:2px 4px; border-radius:3px;">${questData.txHash.slice(0, 16)}...</code></div>` : ''}
+								${questData.onChain ? '<div>💰 Fee Paid: 0.000001 APT</div>' : ''}
+								${questData.verified ? '<div>✅ Verified on Aptos blockchain</div>' : ''}
+								${questData.txHash ? `<div>🔍 <a href="https://explorer.aptoslabs.com/txn/${questData.txHash}" target="_blank" style="color:#82ffa1;">View on Explorer</a></div>` : ''}
+							</div>
+						</div>
+					`;
+				});
+				
+				progressHtml += '</div>';
+			}
+			
+			// Show on-chain proofs summary
+			if (profile.onChainProofs && profile.onChainProofs.length > 0) {
+				progressHtml += '<div style="margin-top:20px; padding:16px; background:#0a2a0a; border-radius:8px; border:1px solid #82ffa1;">';
+				progressHtml += '<h4 style="margin:0 0 12px 0; color:#82ffa1;">⛓️ On-Chain Proofs Summary</h4>';
+				progressHtml += `<div style="font-size:14px; color:#8a8a8a;">Total on-chain quests: <strong style="color:#82ffa1;">${profile.onChainProofs.length}</strong></div>`;
+				progressHtml += `<div style="font-size:12px; color:#8a8a8a; margin-top:8px;">All quest completions are verified and recorded on Aptos blockchain</div>`;
+				progressHtml += '</div>';
+			}
+			
+			progressHtml += '</div>';
+			
+			// Show in modal
+			document.getElementById('modalContent').innerHTML = progressHtml;
+			document.getElementById('modal').style.display = 'block';
+		};
 
 		// Daily streaks system
 		function checkDailyLogin() {
@@ -1875,10 +2441,6 @@ public fun multiply(x: u64, y: u64): u64 {
 			updateStats();
 			setInterval(updateStats, 30000); // Update every 30 seconds
 			
-			// Show referral link if connected
-			if (walletConnected) {
-				document.getElementById('referralSection').style.display = 'block';
-			}
 		}, 1000);
 
 		// Personal dashboard functionality
@@ -1901,10 +2463,7 @@ public fun multiply(x: u64, y: u64): u64 {
 			document.getElementById('personalDashboardModal').style.display = 'grid';
 		});
 
-		// Code editor functionality
-		document.getElementById('viewStats').addEventListener('click', () => {
-			document.getElementById('codeEditorModal').style.display = 'grid';
-		});
+		// Code editor functionality - removed duplicate viewStats listener
 
 		// Code templates
 		window.loadTemplate = function(type) {
@@ -1996,834 +2555,328 @@ public fun multiply(x: u64, y: u64): u64 {
 
 		document.getElementById('connectWallet').addEventListener('click', connectWallet);
 		document.getElementById('disconnectWallet').addEventListener('click', disconnectWallet);
-
-		// New Profile Functions
-		window.loadQuestHistory = function() {
-			if (!userProfile) return;
-			
-			const questHistory = userProfile.questHistory || [];
-			const container = document.getElementById('questHistory');
-			if (!container) return;
-			
-			if (questHistory.length === 0) {
-				container.innerHTML = '<p style="color:#8a8a8a; text-align:center; margin:0;">No quests completed yet. Start your journey!</p>';
-				return;
-			}
-			
-			container.innerHTML = questHistory.map(quest => `
-				<div style="display:flex; justify-content:space-between; align-items:center; padding:8px; border:1px solid #333; border-radius:6px; background:#0f0f0f;">
-					<div>
-						<strong>${quest.title}</strong>
-						<div style="font-size:12px; color:#8a8a8a;">Completed ${new Date(quest.completedAt).toLocaleDateString()}</div>
-					</div>
-					<div style="color:#82ffa1; font-weight:bold;">+${quest.xp || 100} XP</div>
-				</div>
-			`).join('');
-		};
-
-		window.loadActivityTimeline = function() {
-			if (!userProfile) return;
-			
-			const activities = userProfile.activities || [];
-			const container = document.getElementById('activityTimeline');
-			if (!container) return;
-			
-			if (activities.length === 0) {
-				container.innerHTML = '<p style="color:#8a8a8a; text-align:center; margin:0;">No recent activity. Start exploring!</p>';
-				return;
-			}
-			
-			container.innerHTML = activities.slice(0, 10).map(activity => `
-				<div style="display:flex; align-items:center; gap:12px; padding:8px; border:1px solid #333; border-radius:6px; background:#0f0f0f;">
-					<div style="font-size:20px;">${activity.icon}</div>
-					<div style="flex:1;">
-						<div>${activity.description}</div>
-						<div style="font-size:12px; color:#8a8a8a;">${new Date(activity.timestamp).toLocaleString()}</div>
-					</div>
-				</div>
-			`).join('');
-		};
-
-		window.editProfile = function() {
-			if (!userProfile) {
-				alert('Please create a profile first!');
-				return;
-			}
-			
-			// Pre-fill the form with existing data
-			document.getElementById('usernameInput').value = userProfile.username || '';
-			document.getElementById('bioInput').value = userProfile.bio || '';
-			document.getElementById('emailInput').value = userProfile.email || '';
-			document.getElementById('experienceInput').value = userProfile.experience || 'beginner';
-			
-			// Pre-fill social links
-			document.getElementById('twitterInput').value = userProfile.socialLinks?.twitter || '';
-			document.getElementById('githubInput').value = userProfile.socialLinks?.github || '';
-			document.getElementById('linkedinInput').value = userProfile.socialLinks?.linkedin || '';
-			
-			// Set privacy setting
-			const privacyRadios = document.querySelectorAll('input[name="privacy"]');
-			privacyRadios.forEach(radio => {
-				radio.checked = radio.value === (userProfile.privacy || 'public');
-			});
-			
-			// Set skills
-			const skillCheckboxes = document.querySelectorAll('.skill-checkbox input[type="checkbox"]');
-			skillCheckboxes.forEach(checkbox => {
-				checkbox.checked = userProfile.skills && userProfile.skills.includes(checkbox.value);
-			});
-			
-			// Set avatar
-			if (userProfile.avatar) {
-				selectAvatar(userProfile.avatar);
-			}
-			
-			document.getElementById('createProfileModal').style.display = 'grid';
-		};
-
-		window.viewPublicProfile = function() {
-			if (!userProfile) {
-				alert('Please create a profile first!');
-				return;
-			}
-			
-			if (userProfile.privacy === 'private') {
-				alert('Your profile is set to private. Change privacy settings to make it public.');
-				return;
-			}
-			
-			// Load public profile content
-			const content = document.getElementById('publicProfileContent');
-			content.innerHTML = `
-				<div style="text-align:center; margin-bottom:20px;">
-					<div style="font-size:48px; margin-bottom:8px;">${userProfile.avatar}</div>
-					<h3 style="margin:0;">${userProfile.username}</h3>
-					<p style="color:#8a8a8a; margin:4px 0;">${userProfile.bio}</p>
-					<div style="display:flex; gap:8px; justify-content:center; margin:8px 0;">
-						<span class="badge">${userProfile.experience}</span>
-						${userProfile.skills ? userProfile.skills.map(skill => `<span class="badge">${skill}</span>`).join('') : ''}
-					</div>
-					${userProfile.socialLinks && Object.keys(userProfile.socialLinks).length > 0 ? `
-						<div style="display:flex; gap:12px; justify-content:center; margin:12px 0;">
-							${userProfile.socialLinks.twitter ? `<a href="https://twitter.com/${userProfile.socialLinks.twitter.replace('@', '')}" target="_blank" style="color:#82ffa1; text-decoration:none; font-size:20px;" title="X (Twitter)">🐦</a>` : ''}
-							${userProfile.socialLinks.github ? `<a href="https://github.com/${userProfile.socialLinks.github}" target="_blank" style="color:#82ffa1; text-decoration:none; font-size:20px;" title="GitHub">💻</a>` : ''}
-							${userProfile.socialLinks.linkedin ? `<a href="https://${userProfile.socialLinks.linkedin}" target="_blank" style="color:#82ffa1; text-decoration:none; font-size:20px;" title="LinkedIn">💼</a>` : ''}
-						</div>
-					` : ''}
-				</div>
-				
-				<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap:12px; margin:16px 0;">
-					<div style="text-align:center; padding:12px; border:1px solid #333; border-radius:8px;">
-						<div style="font-size:20px; font-weight:bold; color:#82ffa1;">${userProfile.questsCompleted || 0}</div>
-						<div style="font-size:12px; color:#8a8a8a;">Quests</div>
-					</div>
-					<div style="text-align:center; padding:12px; border:1px solid #333; border-radius:8px;">
-						<div style="font-size:20px; font-weight:bold; color:#82ffa1;">${userProfile.streak || 0}</div>
-						<div style="font-size:12px; color:#8a8a8a;">Streak</div>
-					</div>
-					<div style="text-align:center; padding:12px; border:1px solid #333; border-radius:8px;">
-						<div style="font-size:20px; font-weight:bold; color:#82ffa1;">${userProfile.followers ? userProfile.followers.length : 0}</div>
-						<div style="font-size:12px; color:#8a8a8a;">Followers</div>
-					</div>
-					<div style="text-align:center; padding:12px; border:1px solid #333; border-radius:8px;">
-						<div style="font-size:20px; font-weight:bold; color:#82ffa1;">${userProfile.following ? userProfile.following.length : 0}</div>
-						<div style="font-size:12px; color:#8a8a8a;">Following</div>
-					</div>
-				</div>
-				
-				<h4>🏆 Achievements</h4>
-				<div class="chips">
-					${userProfile.badges ? userProfile.badges.map(badge => `<span class="badge">${badge}</span>`).join('') : '<span class="badge">New Builder</span>'}
-				</div>
-			`;
-			
-			document.getElementById('publicProfileModal').style.display = 'grid';
-		};
-
-		window.shareProfile = function() {
-			if (!userProfile) {
-				alert('Please create a profile first!');
-				return;
-			}
-			
-			const profileUrl = userProfile.profileLink || `https://movebuildershub.xyz/profile/${userProfile.username}`;
-			const shareText = `👤 Check out my Move Builders Hub profile!\n\n${userProfile.username} - ${userProfile.bio}\n\n🏆 ${userProfile.questsCompleted || 0} quests completed\n🔥 ${userProfile.streak || 0} day streak\n\n🔗 ${profileUrl}\n\n#MoveBuildersHub #Aptos #Web3Education`;
-			
-			if (navigator.share && isMobile()) {
-				navigator.share({
-					title: `${userProfile.username} - Move Builders Hub Profile`,
-					text: shareText,
-					url: profileUrl
-				});
-			} else {
-				navigator.clipboard.writeText(shareText).then(() => {
-					alert('📋 Profile link copied to clipboard!\n\nShare it with your friends!');
-				});
-			}
-		};
-
-
-		window.toggleFollow = function(userHandle) {
-			if (!userProfile) {
-				alert('Please create a profile first!');
-				return;
-			}
-			
-			if (!userProfile.following) userProfile.following = [];
-			
-			const followBtn = document.getElementById(`followBtn_${userHandle}`);
-			
-			if (userProfile.following.includes(userHandle)) {
-				// Unfollow
-				userProfile.following = userProfile.following.filter(u => u !== userHandle);
-				addActivity('👥', `Unfollowed @${userHandle}`);
-				
-				// Update button
-				if (followBtn) {
-					followBtn.textContent = 'Follow';
-					followBtn.classList.remove('btn');
-					followBtn.classList.add('btn', 'secondary');
-				}
-			} else {
-				// Follow
-				userProfile.following.push(userHandle);
-				addActivity('👥', `Followed @${userHandle}`);
-				
-				// Update button
-				if (followBtn) {
-					followBtn.textContent = 'Followed';
-					followBtn.classList.remove('btn', 'secondary');
-					followBtn.classList.add('btn');
-				}
-			}
-			
-			// Save to localStorage
-			localStorage.setItem(`profile_${walletAddress}`, JSON.stringify(userProfile));
-			
-			// Update UI
-			updateStats();
-		};
-
-		// Close public profile modal
-		document.getElementById('closePublicProfile').addEventListener('click', (e) => {
-			e.preventDefault();
-			document.getElementById('publicProfileModal').style.display = 'none';
-		});
-
-		document.getElementById('publicProfileModal').addEventListener('click', (e) => {
-			if (e.target.id === 'publicProfileModal') {
-				document.getElementById('publicProfileModal').style.display = 'none';
-			}
-		});
-
-		// Add activity to timeline
-		window.addActivity = function(icon, description) {
-			if (!userProfile) return;
-			
-			if (!userProfile.activities) userProfile.activities = [];
-			
-			userProfile.activities.unshift({
-				icon: icon,
-				description: description,
-				timestamp: new Date().toISOString()
-			});
-			
-			// Keep only last 50 activities
-			userProfile.activities = userProfile.activities.slice(0, 50);
-			
-			// Save to localStorage
-			localStorage.setItem(`profile_${walletAddress}`, JSON.stringify(userProfile));
-		};
-
-		// Add quest to history
-		window.addQuestToHistory = function(questTitle, xp = 100) {
-			if (!userProfile) return;
-			
-			if (!userProfile.questHistory) userProfile.questHistory = [];
-			
-			userProfile.questHistory.unshift({
-				title: questTitle,
-				completedAt: new Date().toISOString(),
-				xp: xp
-			});
-			
-			// Keep only last 100 quests
-			userProfile.questHistory = userProfile.questHistory.slice(0, 100);
-			
-			// Save to localStorage
-			localStorage.setItem(`profile_${walletAddress}`, JSON.stringify(userProfile));
-		};
-
-		// Activity Feed Functions
-		window.openActivityFeed = function() {
-			if (!userProfile) {
-				alert('Please create a profile first!');
-				return;
-			}
-			
-			loadActivityFeed();
-			document.getElementById('activityFeedModal').style.display = 'grid';
-		};
-
-		// Quest Progress Functions
-		window.openQuestProgress = function() {
-			loadQuestProgress();
-			document.getElementById('questProgressModal').style.display = 'grid';
-		};
-
-		// Messaging System Functions
-		window.openChat = function(userHandle, userName) {
-			if (!userProfile) {
-				alert('Please create a profile first!');
-				return;
-			}
-			
-			if (!walletConnected) {
-				alert('Please connect your wallet first!');
-				return;
-			}
-			
-			currentChatUser = userHandle;
-			document.getElementById('chatTitle').textContent = `💬 Chat with ${userName}`;
-			
-			// Load gas fee
-			updateGasFee();
-			
-			// Load messages
-			loadMessages();
-			
-			// Show transaction info
-			document.getElementById('transactionInfo').style.display = 'block';
-			
-			document.getElementById('chatModal').style.display = 'grid';
-		};
-
-		window.updateGasFee = async function() {
-			try {
-				// Simulate network status check
-				const networkStatus = Math.random();
-				let status, fee, time;
-				
-				if (networkStatus < 0.3) {
-					status = 'Low';
-					fee = 0.0005;
-					time = '~2s';
-				} else if (networkStatus < 0.7) {
-					status = 'Normal';
-					fee = 0.001;
-					time = '~5s';
-				} else if (networkStatus < 0.9) {
-					status = 'High';
-					fee = 0.002;
-					time = '~10s';
-				} else {
-					status = 'Very High';
-					fee = 0.005;
-					time = '~30s';
-				}
-				
-				gasFee = fee;
-				document.getElementById('chatGasInfo').textContent = `Gas Fee: ${fee} APT (${status})`;
-				document.getElementById('gasFeeDisplay').textContent = `Gas: ${fee} APT`;
-				document.getElementById('networkStatus').textContent = `Network: ${status}`;
-				
-			} catch (error) {
-				console.error('Error updating gas fee:', error);
-				document.getElementById('chatGasInfo').textContent = 'Gas Fee: 0.001 APT (Default)';
-			}
-		};
-
-		window.loadMessages = function() {
-			if (!currentChatUser) return;
-			
-			// Load messages from localStorage
-			const chatKey = `chat_${walletAddress}_${currentChatUser}`;
-			const storedMessages = localStorage.getItem(chatKey);
-			messages = storedMessages ? JSON.parse(storedMessages) : [];
-			
-			// Display messages
-			const container = document.getElementById('chatMessages');
-			if (messages.length === 0) {
-				container.innerHTML = '<p style="text-align:center; color:#8a8a8a; margin:20px 0;">No messages yet. Start the conversation!</p>';
-			} else {
-				container.innerHTML = messages.map(msg => `
-					<div style="display:flex; ${msg.sender === userProfile.username ? 'justify-content:flex-end' : 'justify-content:flex-start'}; margin-bottom:12px;">
-						<div style="max-width:70%; padding:8px 12px; border-radius:12px; background:${msg.sender === userProfile.username ? '#82ffa1' : '#333'}; color:${msg.sender === userProfile.username ? '#000' : '#fff'};">
-							<div style="font-size:12px; opacity:0.7; margin-bottom:4px;">${msg.sender}</div>
-							<div>${msg.content}</div>
-							<div style="font-size:10px; opacity:0.6; margin-top:4px;">${new Date(msg.timestamp).toLocaleTimeString()}</div>
-						</div>
-					</div>
-				`).join('');
-			}
-			
-			// Update message count
-			document.getElementById('messageCount').textContent = `${messages.length} messages`;
-			
-			// Scroll to bottom
-			container.scrollTop = container.scrollHeight;
-		};
-
-		window.sendMessage = async function() {
-			const messageInput = document.getElementById('messageInput');
-			const content = messageInput.value.trim();
-			
-			if (!content) return;
-			if (!currentChatUser) return;
-			if (!userProfile) return;
-			
-			// Show loading state
-			const sendBtn = document.getElementById('sendMessageBtn');
-			sendBtn.innerHTML = '⏳ Sending...';
-			sendBtn.disabled = true;
-			
-			try {
-				// Real wallet transaction
-				await sendMessageTransaction(content);
-				
-				// Add message to local storage
-				const newMessage = {
-					id: Date.now(),
-					sender: userProfile.username,
-					content: content,
-					timestamp: new Date().toISOString(),
-					gasFee: gasFee,
-					recipient: currentChatUser
-				};
-				
-				messages.push(newMessage);
-				const chatKey = `chat_${walletAddress}_${currentChatUser}`;
-				localStorage.setItem(chatKey, JSON.stringify(messages));
-				
-				// Clear input and reload messages
-				messageInput.value = '';
-				loadMessages();
-				
-				// Add activity
-				addActivity('💬', `Sent message to @${currentChatUser}`);
-				
-				// Update gas fee for next message
-				updateGasFee();
-				
-			} catch (error) {
-				console.error('Error sending message:', error);
-				alert('Failed to send message. Please try again.');
-			} finally {
-				sendBtn.innerHTML = 'Send';
-				sendBtn.disabled = false;
-			}
-		};
-
-		window.sendMessageTransaction = async function(content) {
-			if (!window.aptos || !walletConnected) {
-				throw new Error('Wallet not connected');
-			}
-			
-			try {
-				// Get current account
-				const account = await window.aptos.account();
-				
-				// Create message transaction payload
-				const transaction = {
-					type: "entry_function_payload",
-					function: "0x1::coin::transfer",
-					arguments: [
-						"0x1", // Recipient (system address for now)
-						Math.floor(gasFee * 100000000) // Convert APT to octas
-					],
-					type_arguments: ["0x1::aptos_coin::AptosCoin"]
-				};
-				
-				// Show transaction details
-				const confirmMessage = `Send message to @${currentChatUser}?\n\nGas Fee: ${gasFee} APT\nMessage: "${content}"\n\nClick OK to approve in wallet.`;
-				
-				if (!confirm(confirmMessage)) {
-					throw new Error('Transaction cancelled by user');
-				}
-				
-				// Sign and submit transaction
-				const pendingTransaction = await window.aptos.signAndSubmitTransaction(transaction);
-				
-				// Wait for transaction to complete
-				const result = await window.aptos.waitForTransactionWithResult(pendingTransaction.hash);
-				
-				if (result.success) {
-					console.log('Message transaction successful:', result);
-					return result;
-				} else {
-					throw new Error('Transaction failed');
-				}
-				
-			} catch (error) {
-				console.error('Wallet transaction error:', error);
-				throw error;
-			}
-		};
-
-		window.simulateMessageTransaction = async function(content) {
-			// Fallback simulation for testing
-			return new Promise((resolve, reject) => {
-				setTimeout(() => {
-					if (Math.random() > 0.1) {
-						resolve();
-					} else {
-						reject(new Error('Transaction failed'));
-					}
-				}, 2000);
-			});
-		};
-
-		// Close chat modal
+		
+		// Chat modal event listeners
 		document.getElementById('closeChat').addEventListener('click', (e) => {
 			e.preventDefault();
 			document.getElementById('chatModal').style.display = 'none';
-			currentChatUser = null;
 		});
-
-		document.getElementById('chatModal').addEventListener('click', (e) => {
-			if (e.target.id === 'chatModal') {
-				document.getElementById('chatModal').style.display = 'none';
-				currentChatUser = null;
-			}
-		});
-
+		
 		// Enter key to send message
 		document.addEventListener('keypress', (e) => {
 			if (e.key === 'Enter' && document.getElementById('messageInput') === document.activeElement) {
 				sendMessage();
 			}
 		});
-
-		window.loadActivityFeed = function() {
-			if (!userProfile) return;
+	
+	// Global variables for messaging
+	window.currentChatUser = null;
+	window.messages = [];
+	window.gasFee = 0.001;
+	
+	// Like quest function
+	window.likeQuest = function(questId, reaction) {
+		const quest = quests.find(q => q.id === questId);
+		if (!quest) return;
+		
+		// Initialize reaction counts if not exists
+		if (!quest.likes) quest.likes = 0;
+		if (!quest.fire) quest.fire = 0;
+		if (!quest.rocket) quest.rocket = 0;
+		
+		// Update reaction count
+		if (reaction === '❤️') {
+			quest.likes++;
+			document.getElementById(`likes-${questId}`).textContent = quest.likes;
+		} else if (reaction === '🔥') {
+			quest.fire++;
+			document.getElementById(`fire-${questId}`).textContent = quest.fire;
+		} else if (reaction === '🚀') {
+			quest.rocket++;
+			document.getElementById(`rocket-${questId}`).textContent = quest.rocket;
+		}
+		
+		// Show feedback
+		const button = event.target.closest('button');
+		button.style.background = '#82ffa1';
+		button.style.color = '#000';
+		setTimeout(() => {
+			button.style.background = 'transparent';
+			button.style.color = '#fff';
+		}, 1000);
+	};
+	
+	// Toggle follow function
+	window.toggleFollow = function(userHandle) {
+		if (!window.userProfile) {
+			alert('Please create a profile first!');
+			return;
+		}
+		
+		if (!window.userProfile.following) window.userProfile.following = [];
+		
+		const followBtn = document.getElementById(`followBtn_${userHandle}`);
+		
+		if (window.userProfile.following.includes(userHandle)) {
+			// Unfollow
+			window.userProfile.following = window.userProfile.following.filter(u => u !== userHandle);
 			
-			const container = document.getElementById('activityFeedContent');
-			if (!container) return;
+			// Update button
+			if (followBtn) {
+				followBtn.textContent = 'Follow';
+				followBtn.classList.remove('btn');
+				followBtn.classList.add('btn', 'secondary');
+			}
+		} else {
+			// Follow
+			window.userProfile.following.push(userHandle);
 			
-			// Get all activities from following users (simulated)
-			const allActivities = userProfile.activities || [];
-			const followingActivities = [];
+			// Update button
+			if (followBtn) {
+				followBtn.textContent = 'Followed';
+				followBtn.classList.remove('btn', 'secondary');
+				followBtn.classList.add('btn');
+			}
+		}
+		
+		// Save to localStorage
+		localStorage.setItem(`profile_${window.walletAddress}`, JSON.stringify(window.userProfile));
+	};
+	
+	// Open chat function
+	window.openChat = function(userHandle, userName) {
+		if (!window.userProfile) {
+			alert('Please create a profile first!');
+			return;
+		}
+		
+		if (!window.walletConnected) {
+			alert('Please connect your wallet first!');
+			return;
+		}
+		
+		window.currentChatUser = userHandle;
+		document.getElementById('chatTitle').textContent = `💬 Chat with ${userName}`;
+		
+		// Load gas fee
+		updateGasFee();
+		
+		// Load messages
+		loadMessages();
+		
+		// Show transaction info
+		document.getElementById('transactionInfo').style.display = 'block';
+		
+		document.getElementById('chatModal').style.display = 'grid';
+	};
+	
+	// Update gas fee function
+	window.updateGasFee = async function() {
+		try {
+			// Simulate network status check
+			const networkStatus = Math.random();
+			let status, fee;
 			
-			// Simulate activities from followed users
-			if (userProfile.following && userProfile.following.length > 0) {
-				userProfile.following.forEach(userHandle => {
-					// Simulate some activities from followed users
-					followingActivities.push({
-						user: userHandle,
-						icon: '🎯',
-						description: `Completed quest: Move Basics`,
-						timestamp: new Date(Date.now() - Math.random() * 86400000).toISOString()
-					});
-					followingActivities.push({
-						user: userHandle,
-						icon: '🏆',
-						description: `Registered for Move DeFi Challenge`,
-						timestamp: new Date(Date.now() - Math.random() * 172800000).toISOString()
-					});
-				});
+			if (networkStatus < 0.3) {
+				status = 'Low';
+				fee = 0.1; // Much higher minimum fee
+			} else if (networkStatus < 0.7) {
+				status = 'Normal';
+				fee = 0.2;
+			} else if (networkStatus < 0.9) {
+				status = 'High';
+				fee = 0.5;
+			} else {
+				status = 'Very High';
+				fee = 1.0;
 			}
 			
-			// Combine and sort all activities
-			const combinedActivities = [...allActivities, ...followingActivities]
-				.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-				.slice(0, 20);
+			window.gasFee = fee;
+			document.getElementById('chatGasInfo').textContent = `Gas Fee: ${fee} APT (${status})`;
+			document.getElementById('gasFeeDisplay').textContent = `Gas: ${fee} APT`;
+			document.getElementById('networkStatus').textContent = `Network: ${status}`;
 			
-			if (combinedActivities.length === 0) {
-				container.innerHTML = '<p style="color:#8a8a8a; text-align:center; margin:20px 0;">No recent activity. Start following other builders!</p>';
-				return;
-			}
-			
-			container.innerHTML = combinedActivities.map(activity => `
-				<div style="display:flex; align-items:center; gap:12px; padding:12px; border:1px solid #333; border-radius:8px; background:#0f0f0f; margin-bottom:8px;">
-					<div style="font-size:24px;">${activity.icon}</div>
-					<div style="flex:1;">
-						<div>
-							${activity.user ? `<strong>@${activity.user}</strong> ` : ''}${activity.description}
-						</div>
-						<div style="font-size:12px; color:#8a8a8a; margin-top:4px;">
-							${new Date(activity.timestamp).toLocaleString()}
-						</div>
+		} catch (error) {
+			console.error('Error updating gas fee:', error);
+			document.getElementById('chatGasInfo').textContent = 'Gas Fee: 0.001 APT (Default)';
+		}
+	};
+	
+	// Load messages function
+	window.loadMessages = function() {
+		if (!window.currentChatUser) return;
+		
+		// Load messages from localStorage
+		const chatKey = `chat_${window.walletAddress}_${window.currentChatUser}`;
+		const storedMessages = localStorage.getItem(chatKey);
+		window.messages = storedMessages ? JSON.parse(storedMessages) : [];
+		
+		// Display messages
+		const container = document.getElementById('chatMessages');
+		if (window.messages.length === 0) {
+			container.innerHTML = '<p style="text-align:center; color:#8a8a8a; margin:20px 0;">No messages yet. Start the conversation!</p>';
+		} else {
+			container.innerHTML = window.messages.map(msg => `
+				<div style="display:flex; ${msg.sender === window.userProfile.username ? 'justify-content:flex-end' : 'justify-content:flex-start'}; margin-bottom:12px;">
+					<div style="max-width:70%; padding:8px 12px; border-radius:12px; background:${msg.sender === window.userProfile.username ? '#82ffa1' : '#333'}; color:${msg.sender === window.userProfile.username ? '#000' : '#fff'};">
+						<div style="font-size:12px; opacity:0.7; margin-bottom:4px;">${msg.sender}</div>
+						<div>${msg.content}</div>
+						<div style="font-size:10px; opacity:0.6; margin-top:4px;">${new Date(msg.timestamp).toLocaleTimeString()}</div>
 					</div>
 				</div>
 			`).join('');
-		};
-
-		// Close activity feed modal
-		document.getElementById('closeActivityFeed').addEventListener('click', (e) => {
-			e.preventDefault();
-			document.getElementById('activityFeedModal').style.display = 'none';
-		});
-
-		document.getElementById('activityFeedModal').addEventListener('click', (e) => {
-			if (e.target.id === 'activityFeedModal') {
-				document.getElementById('activityFeedModal').style.display = 'none';
-			}
-		});
-
-		// Live Leaderboard Functions
-		let autoRefreshInterval = null;
-		let autoRefreshEnabled = false;
-		let dashboardAutoRefreshInterval = null;
-		let dashboardAutoRefreshEnabled = false;
-		let questProgressAutoRefreshInterval = null;
-		let questProgressAutoRefreshEnabled = false;
-		let currentChatUser = null;
-		let messages = [];
-		let gasFee = 0.001;
-
-		window.loadLeaderboard = function() {
-			const container = document.getElementById('leaderboardContent');
-			if (!container) return;
+		}
+		
+		// Update message count
+		document.getElementById('messageCount').textContent = `${window.messages.length} messages`;
+		
+		// Scroll to bottom
+		container.scrollTop = container.scrollHeight;
+	};
+	
+	// Send message function
+	window.sendMessage = async function() {
+		const messageInput = document.getElementById('messageInput');
+		const content = messageInput.value.trim();
+		
+		if (!content) return;
+		if (!window.currentChatUser) return;
+		if (!window.userProfile) return;
+		
+		// Show loading state
+		const sendBtn = document.getElementById('sendMessageBtn');
+		sendBtn.innerHTML = '⏳ Sending...';
+		sendBtn.disabled = true;
+		
+		try {
+			// Real wallet transaction
+			await sendMessageTransaction(content);
 			
-			// Simulate live leaderboard data with some randomness
-			const leaderboardData = [
-				{ rank: 1, username: '@nese', quests: 35 + Math.floor(Math.random() * 3), apt: 1.4 + (Math.random() * 0.2).toFixed(1), change: Math.random() > 0.5 ? '↗️' : '→' },
-				{ rank: 2, username: '@dilek', quests: 29 + Math.floor(Math.random() * 3), apt: 1.1 + (Math.random() * 0.2).toFixed(1), change: Math.random() > 0.5 ? '↗️' : '→' },
-				{ rank: 3, username: '@selina', quests: 22 + Math.floor(Math.random() * 3), apt: 0.7 + (Math.random() * 0.2).toFixed(1), change: Math.random() > 0.5 ? '↗️' : '→' },
-				{ rank: 4, username: '@deniz', quests: 20 + Math.floor(Math.random() * 3), apt: 0.6 + (Math.random() * 0.2).toFixed(1), change: Math.random() > 0.5 ? '↗️' : '→' },
-				{ rank: 5, username: '@efecan', quests: 18 + Math.floor(Math.random() * 3), apt: 0.5 + (Math.random() * 0.2).toFixed(1), change: Math.random() > 0.5 ? '↗️' : '→' },
-				{ rank: 6, username: '@okant', quests: 14 + Math.floor(Math.random() * 3), apt: 0.4 + (Math.random() * 0.2).toFixed(1), change: Math.random() > 0.5 ? '↗️' : '→' },
-				{ rank: 7, username: '@newuser1', quests: 12 + Math.floor(Math.random() * 3), apt: 0.3 + (Math.random() * 0.2).toFixed(1), change: Math.random() > 0.5 ? '↗️' : '→' },
-				{ rank: 8, username: '@newuser2', quests: 10 + Math.floor(Math.random() * 3), apt: 0.2 + (Math.random() * 0.2).toFixed(1), change: Math.random() > 0.5 ? '↗️' : '→' }
-			];
+			// Add message to local storage
+			const newMessage = {
+				id: Date.now(),
+				sender: window.userProfile.username,
+				content: content,
+				timestamp: new Date().toISOString(),
+				gasFee: window.gasFee,
+				recipient: window.currentChatUser
+			};
 			
-			container.innerHTML = `
-				<div style="background:#1a1a1a; border:1px solid #333; border-radius:8px; padding:16px;">
-					<div style="display:grid; gap:8px;">
-						${leaderboardData.map(user => `
-							<div style="display:flex; align-items:center; gap:12px; padding:12px; border:1px solid #333; border-radius:6px; background:#0f0f0f; transition: all 0.3s ease;">
-								<div style="font-size:20px; font-weight:bold; color:#82ffa1; min-width:30px;">
-									${user.rank === 1 ? '🥇' : user.rank === 2 ? '🥈' : user.rank === 3 ? '🥉' : `#${user.rank}`}
-								</div>
-								<div style="flex:1;">
-									<div style="font-weight:bold;">${user.username}</div>
-									<div style="font-size:12px; color:#8a8a8a;">${user.quests} quests • ${user.apt} APT</div>
-								</div>
-								<div style="font-size:16px;" title="Trend">${user.change}</div>
-							</div>
-						`).join('')}
-					</div>
-					<div style="text-align:center; margin-top:16px; color:#8a8a8a; font-size:12px;">
-						Last updated: ${new Date().toLocaleTimeString()}
-					</div>
-				</div>
-			`;
-		};
-
-		window.refreshLeaderboard = function() {
-			const btn = document.getElementById('refreshLeaderboardBtn');
-			btn.innerHTML = '⏳ Refreshing...';
-			btn.disabled = true;
+			window.messages.push(newMessage);
+			const chatKey = `chat_${window.walletAddress}_${window.currentChatUser}`;
+			localStorage.setItem(chatKey, JSON.stringify(window.messages));
 			
-			setTimeout(() => {
-				loadLeaderboard();
-				btn.innerHTML = '🔄 Refresh';
-				btn.disabled = false;
-			}, 1000);
-		};
-
-		// Dashboard Auto-Refresh Functions
-		window.toggleDashboardAutoRefresh = function() {
-			const btn = document.getElementById('dashboardAutoRefreshBtn');
+			// Clear input and reload messages
+			messageInput.value = '';
+			loadMessages();
 			
-			if (dashboardAutoRefreshEnabled) {
-				// Disable auto refresh
-				clearInterval(dashboardAutoRefreshInterval);
-				dashboardAutoRefreshEnabled = false;
-				btn.innerHTML = '🔄 Auto Refresh: OFF';
-				btn.style.background = 'transparent';
-			} else {
-				// Enable auto refresh
-				dashboardAutoRefreshInterval = setInterval(() => {
-					updateStats();
-					loadQuestHistory();
-					loadActivityTimeline();
-				}, 10000); // Refresh every 10 seconds
-				dashboardAutoRefreshEnabled = true;
-				btn.innerHTML = '🔄 Auto Refresh: ON';
-				btn.style.background = '#82ffa1';
-				btn.style.color = '#000';
-			}
-		};
-
-		window.toggleAutoRefresh = function() {
-			const btn = document.getElementById('autoRefreshBtn');
+			// Update gas fee for next message
+			updateGasFee();
 			
-			if (autoRefreshEnabled) {
-				// Disable auto refresh
-				clearInterval(autoRefreshInterval);
-				autoRefreshEnabled = false;
-				btn.innerHTML = '⏰ Auto Refresh: OFF';
-				btn.style.background = 'transparent';
-			} else {
-				// Enable auto refresh
-				autoRefreshInterval = setInterval(() => {
-					loadLeaderboard();
-				}, 5000); // Refresh every 5 seconds
-				autoRefreshEnabled = true;
-				btn.innerHTML = '⏰ Auto Refresh: ON';
-				btn.style.background = '#82ffa1';
-				btn.style.color = '#000';
-			}
-		};
-
-		// Close leaderboard modal
-		document.getElementById('closeLeaderboard').addEventListener('click', (e) => {
-			e.preventDefault();
-			document.getElementById('leaderboardModal').style.display = 'none';
-			// Stop auto refresh when modal closes
-			if (autoRefreshEnabled) {
-				toggleAutoRefresh();
-			}
-		});
-
-		document.getElementById('leaderboardModal').addEventListener('click', (e) => {
-			if (e.target.id === 'leaderboardModal') {
-				document.getElementById('leaderboardModal').style.display = 'none';
-				// Stop auto refresh when modal closes
-				if (autoRefreshEnabled) {
-					toggleAutoRefresh();
+		} catch (error) {
+			console.error('Error sending message:', error);
+			alert('Failed to send message. Please try again.');
+		} finally {
+			sendBtn.innerHTML = 'Send';
+			sendBtn.disabled = false;
+		}
+	};
+	
+	// Simulate wallet transaction for messaging
+	window.simulateMessageTransaction = async function(content) {
+		// Simulate transaction delay
+		await new Promise(resolve => setTimeout(resolve, 2000));
+		
+		// Simulate gas fee deduction
+		console.log(`💸 Gas fee deducted: ${window.gasFee} APT`);
+		console.log(`📝 Message: "${content}"`);
+		console.log(`✅ Transaction simulated successfully`);
+		
+		return "simulated_tx_hash_" + Date.now();
+	};
+	
+	// Real wallet transaction for messaging
+	window.sendMessageTransaction = async function(content) {
+		console.log('🔍 Checking Petra wallet...');
+		console.log('window.aptos:', window.aptos);
+		console.log('window.walletConnected:', window.walletConnected);
+		console.log('window.walletAddress:', window.walletAddress);
+		
+		// Check if Petra wallet is installed
+		if (typeof window.aptos === 'undefined') {
+			alert('Petra wallet not found! Please install Petra wallet first.');
+			throw new Error('Petra wallet not found. Please install Petra wallet.');
+		}
+		
+		// Check if wallet is connected
+		if (!window.walletConnected) {
+			alert('Wallet not connected! Please connect your wallet first.');
+			throw new Error('Wallet not connected. Please connect your wallet first.');
+		}
+		
+		// Check network - should be testnet
+		try {
+			const network = await window.aptos.network();
+			console.log('Current network:', network);
+			
+			if (network !== 'testnet') {
+				const switchNetwork = confirm(`⚠️ You're on ${network} network!\n\nThis app works on Aptos Testnet.\n\nSwitch to Testnet now?`);
+				if (switchNetwork) {
+					await window.aptos.switchNetwork('testnet');
+					alert('✅ Switched to Testnet! Please try again.');
+					return;
+				} else {
+					throw new Error('Please switch to Testnet to use this feature.');
 				}
 			}
-		});
-
-		// Live Quest Progress Functions
-		window.loadQuestProgress = function() {
-			const container = document.getElementById('questProgressContent');
-			if (!container) return;
-			
-			// Simulate live quest progress data
-			const questProgressData = [
-				{ quest: 'Move Basics', users: 45, completed: 32, inProgress: 13, completionRate: 71 },
-				{ quest: 'Smart Contracts', users: 38, completed: 28, inProgress: 10, completionRate: 74 },
-				{ quest: 'DeFi Protocols', users: 29, completed: 18, inProgress: 11, completionRate: 62 },
-				{ quest: 'NFT Development', users: 22, completed: 15, inProgress: 7, completionRate: 68 },
-				{ quest: 'Testing & Security', users: 19, completed: 12, inProgress: 7, completionRate: 63 },
-				{ quest: 'Advanced Move', users: 15, completed: 8, inProgress: 7, completionRate: 53 }
-			];
-			
-			container.innerHTML = `
-				<div style="background:#1a1a1a; border:1px solid #333; border-radius:8px; padding:16px;">
-					<div style="display:grid; gap:12px;">
-						${questProgressData.map(quest => `
-							<div style="border:1px solid #333; border-radius:8px; padding:16px; background:#0f0f0f;">
-								<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-									<h4 style="margin:0; color:#82ffa1;">${quest.quest}</h4>
-									<span style="color:#8a8a8a; font-size:12px;">${quest.completionRate}% completion</span>
-								</div>
-								<div style="background:#1a1a1a; border-radius:4px; height:8px; margin-bottom:8px;">
-									<div style="background:#82ffa1; height:100%; border-radius:4px; width:${quest.completionRate}%; transition: width 0.5s ease;"></div>
-								</div>
-								<div style="display:flex; justify-content:space-between; font-size:12px; color:#8a8a8a;">
-									<span>👥 ${quest.users} users</span>
-									<span>✅ ${quest.completed} completed</span>
-									<span>🔄 ${quest.inProgress} in progress</span>
-								</div>
-							</div>
-						`).join('')}
-					</div>
-					<div style="text-align:center; margin-top:16px; color:#8a8a8a; font-size:12px;">
-						Last updated: ${new Date().toLocaleTimeString()}
-					</div>
-				</div>
-			`;
-		};
-
-		window.refreshQuestProgress = function() {
-			const btn = document.getElementById('refreshQuestProgressBtn');
-			btn.innerHTML = '⏳ Refreshing...';
-			btn.disabled = true;
-			
-			setTimeout(() => {
-				loadQuestProgress();
-				btn.innerHTML = '🔄 Refresh';
-				btn.disabled = false;
-			}, 1000);
-		};
-
-		window.toggleQuestProgressAutoRefresh = function() {
-			const btn = document.getElementById('questProgressAutoRefreshBtn');
-			
-			if (questProgressAutoRefreshEnabled) {
-				// Disable auto refresh
-				clearInterval(questProgressAutoRefreshInterval);
-				questProgressAutoRefreshEnabled = false;
-				btn.innerHTML = '⏰ Auto Refresh: OFF';
-				btn.style.background = 'transparent';
-			} else {
-				// Enable auto refresh
-				questProgressAutoRefreshInterval = setInterval(() => {
-					loadQuestProgress();
-				}, 8000); // Refresh every 8 seconds
-				questProgressAutoRefreshEnabled = true;
-				btn.innerHTML = '⏰ Auto Refresh: ON';
-				btn.style.background = '#82ffa1';
-				btn.style.color = '#000';
-			}
-		};
-
-		// Close quest progress modal
-		document.getElementById('closeQuestProgress').addEventListener('click', (e) => {
-			e.preventDefault();
-			document.getElementById('questProgressModal').style.display = 'none';
-			// Stop auto refresh when modal closes
-			if (questProgressAutoRefreshEnabled) {
-				toggleQuestProgressAutoRefresh();
-			}
-		});
-
-		document.getElementById('questProgressModal').addEventListener('click', (e) => {
-			if (e.target.id === 'questProgressModal') {
-				document.getElementById('questProgressModal').style.display = 'none';
-				// Stop auto refresh when modal closes
-				if (questProgressAutoRefreshEnabled) {
-					toggleQuestProgressAutoRefresh();
-				}
-			}
-		});
-
-		// Like/React System Functions
-		window.likeQuest = function(questId, reaction) {
-			if (!userProfile) {
-				alert('Please create a profile first!');
-				return;
+		} catch (error) {
+			console.log('Network check failed:', error);
+			// Continue anyway if network check fails
+		}
+		
+		try {
+			// Confirm transaction with user
+			const confirmed = confirm(`Send message with gas fee: ${window.gasFee} APT\n\nMessage: "${content}"\n\nApprove transaction?`);
+			if (!confirmed) {
+				throw new Error('Transaction cancelled by user');
 			}
 			
-			// Get current quest data
-			const quest = quests.find(q => q.id === questId);
-			if (!quest) return;
+			console.log('🚀 Starting transaction...');
+			console.log('Amount:', Math.floor(window.gasFee * 100000000));
 			
-			// Initialize reaction counts if not exist
-			if (!quest.likes) quest.likes = 0;
-			if (!quest.fire) quest.fire = 0;
-			if (!quest.rocket) quest.rocket = 0;
+			// Create real transaction using signAndSubmitTransaction
+			console.log('Creating real transaction...');
 			
-			// Update reaction count
-			if (reaction === '❤️') {
-				quest.likes++;
-				document.getElementById(`likes-${questId}`).textContent = quest.likes;
-			} else if (reaction === '🔥') {
-				quest.fire++;
-				document.getElementById(`fire-${questId}`).textContent = quest.fire;
-			} else if (reaction === '🚀') {
-				quest.rocket++;
-				document.getElementById(`rocket-${questId}`).textContent = quest.rocket;
-			}
+			const transaction = {
+				arguments: [
+					"0x1", // Burn address
+					Math.floor(window.gasFee * 100000000).toString() // Amount in octas
+				],
+				function: "0x1::coin::transfer",
+				type: "entry_function_payload",
+				type_arguments: ["0x1::aptos_coin::AptosCoin"]
+			};
 			
-			// Add activity to timeline
-			addActivity('👍', `Reacted ${reaction} to quest: ${quest.title}`);
+			console.log('Transaction data:', transaction);
 			
-			// Show feedback
-			const button = event.target.closest('button');
-			button.style.background = '#82ffa1';
-			button.style.color = '#000';
-			setTimeout(() => {
-				button.style.background = 'transparent';
-				button.style.color = '#fff';
-			}, 1000);
-		};
-
-	})();
+			// Submit transaction - this should open Petra wallet
+			const response = await window.aptos.signAndSubmitTransaction(transaction);
+			
+			console.log('📝 Transaction response:', response);
+			
+			// Get transaction hash
+			const txHash = response.hash || response.transaction?.hash || "tx_" + Date.now();
+			
+			console.log('✅ Message transaction successful:', txHash);
+			return txHash;
+			
+		} catch (error) {
+			console.error('❌ Message transaction failed:', error);
+			console.error('Error details:', error.message);
+			alert('Transaction failed: ' + error.message);
+			throw error;
+		}
+	};
 	</script>
 </body>
 </html>

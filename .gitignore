@@ -13,6 +13,7 @@ yarn-error.log*
 
 # Build outputs
 build/
+.next/
 dist/
 *.tgz
 *.tar.gz

@@ -3,7 +3,7 @@ name = "movehub"
 version = "0.0.1"
 
 [dependencies]
-AptosFramework = { local = "./aptos-core/aptos-move/framework/aptos-framework" }
+AptosFramework = { git = "https://github.com/aptos-labs/aptos-framework.git", subdir = "aptos-framework", rev = "mainnet" }
 
 [addresses]
 movehub = "0x24a2be71c4ec8e690f086aef072d81c5789a0f91b82146c6e837490d44b06d35"

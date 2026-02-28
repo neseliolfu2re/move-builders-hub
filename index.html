@@ -11,7 +11,7 @@
 	<meta name="apple-mobile-web-app-title" content="Move Builders Hub">
 	<link rel="manifest" href="manifest.json">
 	<link rel="apple-touch-icon" href="logo.png">
-	<script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=mOrX-bGrCd2ojWTI94dLZLQXd0p6VX2nlfhNmWDlzTu8DOK_rxjPU8OBRLuCZFuLh3p8O9MEaFBrAe-iHHUHx_QAsWKSzJkhDmfGp72q4VyONaBmp7xKnN72LC8VkvniWDAxiXR9et8jbV4BfJJc71SFF1MaVe5OJsb8yTEzUZ-tGI1kHzW85c-qr6KeNPoFJ63RW2TiFXdFKFB9DKpPtQ" charset="UTF-8"></script><link rel="stylesheet" crossorigin="anonymous" href="https://gc.kis.v2.scr.kaspersky-labs.com/E3E8934C-235A-4B0E-825A-35A08381A191/abn/main.css?attr=aHR0cHM6Ly9tdC1zb25vbWEuZ3V6ZWxob3N0aW5nLmNvbToyMDgzL2Nwc2VzczQ0MDgzMTc2NzQvZG93bmxvYWQ_c2tpcGVuY29kZT0xJmZpbGU9JTJmaG9tZSUyZmZ1cmVvcmclMmZtb3ZlYnVpbGRlcnNodWIueHl6JTJmaW5kZXguaHRtbA"/><style>
+	<style>
 		:root { color-scheme: dark; }
 		html, body { height: 100%; }
 		* { box-sizing: border-box; }
@@ -704,6 +704,9 @@ module 0x1::hello_world {
 
 	<script>
 	// Global scope - no IIFE
+	// API Base URL - set window.MOVEHUB_API_BASE before load if backend is on different domain
+	window.API_BASE = (typeof window !== 'undefined' && window.MOVEHUB_API_BASE) ? window.MOVEHUB_API_BASE.replace(/\/$/, '') : '';
+
 	// Quests catalog
 	window.quests = [
 		{ id:1, title:'🎯 Basic Move Syntax', diff:'Beginner', reward:'10 APT', desc:'Move basics: variables, functions, types.' },
@@ -2076,10 +2079,28 @@ public fun multiply(x: u64, y: u64): u64 {
 		}
 
 		// Update stats periodically
-		function updateStats() {
-			document.getElementById('activeDevelopers').textContent = Math.floor(Math.random() * 20) + 120;
-			document.getElementById('completedQuests').textContent = Math.floor(Math.random() * 30) + 80;
-			document.getElementById('onChainTx').textContent = Math.floor(Math.random() * 50) + 140;
+		async function updateStats() {
+			const activeEl = document.getElementById('activeDevelopers');
+			const completedEl = document.getElementById('completedQuests');
+			const txEl = document.getElementById('onChainTx');
+			if (!activeEl || !completedEl || !txEl) return;
+			try {
+				const apiUrl = (window.API_BASE || '') + '/api/analytics';
+				const res = await fetch(apiUrl);
+				if (res.ok) {
+					const data = await res.json();
+					activeEl.textContent = data.dailyActiveUsers ?? data.totalUsers ?? 0;
+					completedEl.textContent = data.totalQuestsCompleted ?? 0;
+					txEl.textContent = data.totalTransactions ?? 0;
+					return;
+				}
+			} catch (e) {
+				console.warn('Analytics fetch failed:', e.message);
+			}
+			// Fallback: keep existing or show 0
+			if (!activeEl.textContent) activeEl.textContent = '0';
+			if (!completedEl.textContent) completedEl.textContent = '0';
+			if (!txEl.textContent) txEl.textContent = '0';
 		}
 
 		// Enhanced social sharing function
@@ -2173,10 +2194,27 @@ public fun multiply(x: u64, y: u64): u64 {
 				alert(loadingMsg);
 
 				// Create quest completion transaction
-				const questCompletionTx = await createQuestCompletionTransaction(questId, questTitle);
+				let questCompletionTx = await createQuestCompletionTransaction(questId, questTitle);
 				
-				// Submit transaction to blockchain
-				const response = await window.aptos.signAndSubmitTransaction(questCompletionTx);
+				// Submit transaction to blockchain (fallback to simple transfer if Move contract not deployed)
+				let response;
+				try {
+					response = await window.aptos.signAndSubmitTransaction(questCompletionTx);
+				} catch (txErr) {
+					const msg = (txErr.message || '').toLowerCase();
+					if (msg.includes('module') || msg.includes('abi') || msg.includes('not found') || msg.includes('invalid')) {
+						console.warn('Move contract not deployed, using fallback transfer');
+						questCompletionTx = {
+							arguments: ["0x1", "1000"],
+							function: "0x1::aptos_account::transfer",
+							type: "entry_function_payload",
+							type_arguments: ["0x1::aptos_coin::AptosCoin"]
+						};
+						response = await window.aptos.signAndSubmitTransaction(questCompletionTx);
+					} else {
+						throw txErr;
+					}
+				}
 				
 				console.log('🎯 Quest completion transaction:', response);
 				
@@ -2188,6 +2226,23 @@ public fun multiply(x: u64, y: u64): u64 {
 				
 				// Update local storage with on-chain proof
 				updateQuestProgressOnChain(questId, response.hash);
+
+				// Sync to backend API
+				try {
+					const apiUrl = (window.API_BASE || '') + '/api/complete-quest';
+					await fetch(apiUrl, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							walletAddress: window.walletAddress,
+							questId,
+							timestamp: Date.now(),
+							txHash: response.hash
+						})
+					});
+				} catch (e) {
+					console.warn('Backend sync failed (offline or no API):', e.message);
+				}
 				
 				alert(`🎉 Quest "${questTitle}" completed on-chain!\n\n✅ Transaction Hash: ${response.hash.slice(0, 16)}...\n💰 Fee Paid: 0.000001 APT\n⛓️ Recorded on Aptos blockchain\n🏆 Achievement earned\n\n🔗 View on Explorer: https://explorer.aptoslabs.com/txn/${response.hash}`);
 				
@@ -2211,40 +2266,19 @@ public fun multiply(x: u64, y: u64): u64 {
 			}
 		}
 
-		// Create quest completion transaction
+		// Create quest completion transaction - calls Move contract when deployed
 		async function createQuestCompletionTransaction(questId, questTitle) {
-			// Get current network
-			const network = await window.aptos.network();
-			console.log('🌐 Current network:', network);
+			const CONTRACT_ADDRESS = "0x24a2be71c4ec8e690f086aef072d81c5789a0f91b82146c6e837490d44b06d35";
+			const proofStr = "web_" + Date.now() + "_q" + questId;
 
-			// Quest completion data
-			const questData = {
-				questId: questId,
-				questTitle: questTitle,
-				timestamp: Date.now(),
-				userAddress: window.walletAddress,
-				completionProof: `quest_${questId}_${Date.now()}`
-			};
-
-			// Create a real quest completion transaction
-			// We'll use a simple transfer to a quest completion address with memo
-			const questCompletionAddress = "0x1"; // Burn address for quest completion
-			const questFee = 1000; // 0.000001 APT (very small fee for quest completion)
-			
-			const transaction = {
-				arguments: [
-					questCompletionAddress, // Quest completion address
-					questFee.toString() // Small fee for quest completion
-				],
-				function: "0x1::aptos_account::transfer",
+			// Move contract: quest_system::complete_quest(quest_id, tx_hash)
+			// Requires: quest_system & QuestRegistry initialized on-chain
+			return {
+				arguments: [questId.toString(), proofStr],
+				function: CONTRACT_ADDRESS + "::quest_system::complete_quest",
 				type: "entry_function_payload",
-				type_arguments: ["0x1::aptos_coin::AptosCoin"]
+				type_arguments: []
 			};
-
-			console.log('🎯 Quest completion transaction:', transaction);
-			console.log('📝 Quest data:', questData);
-
-			return transaction;
 		}
 
 		// Update quest progress with on-chain proof
@@ -2444,21 +2478,43 @@ public fun multiply(x: u64, y: u64): u64 {
 		}, 1000);
 
 		// Personal dashboard functionality
-		document.getElementById('myDashboard').addEventListener('click', () => {
-			if (!walletConnected || !userProfile) {
-				alert('Please connect wallet and create profile first!');
+		document.getElementById('myDashboard').addEventListener('click', async () => {
+			if (!walletConnected || !window.walletAddress) {
+				alert('Please connect wallet first!');
 				return;
 			}
 			
+			let displayProfile = window.userProfile || {};
+			
+			// Fetch from backend API if available
+			if (window.API_BASE || window.walletAddress) {
+				try {
+					const apiUrl = (window.API_BASE || '') + '/api/user-progress/' + encodeURIComponent(window.walletAddress);
+					const res = await fetch(apiUrl);
+					if (res.ok) {
+						const apiData = await res.json();
+						displayProfile = {
+							...displayProfile,
+							questsCompleted: apiData.totalCompleted ?? displayProfile.questsCompleted,
+							streak: apiData.streak ?? displayProfile.streak,
+							badges: (apiData.badges && apiData.badges.length) ? apiData.badges : (displayProfile.badges || [])
+						};
+					}
+				} catch (e) {
+					console.warn('API fetch failed:', e.message);
+				}
+			}
+			
 			// Update dashboard data
-			document.getElementById('userQuestsCompleted').textContent = userProfile.questsCompleted || 0;
-			document.getElementById('userStreak').textContent = userProfile.streak || 0;
-			document.getElementById('userLevel').textContent = Math.floor((userProfile.questsCompleted || 0) / 2) + 1;
-			document.getElementById('userXP').textContent = (userProfile.questsCompleted || 0) * 100 + (userProfile.xp || 0);
+			const qCompleted = displayProfile.questsCompleted || 0;
+			document.getElementById('userQuestsCompleted').textContent = qCompleted;
+			document.getElementById('userStreak').textContent = displayProfile.streak || 0;
+			document.getElementById('userLevel').textContent = Math.floor(qCompleted / 2) + 1;
+			document.getElementById('userXP').textContent = qCompleted * 100 + (displayProfile.xp || 0);
 			
 			// Show badges
 			const badgesDiv = document.getElementById('userBadges');
-			badgesDiv.innerHTML = (userProfile.badges || []).map(badge => `<span class="chip">${badge}</span>`).join('');
+			badgesDiv.innerHTML = (displayProfile.badges || []).map(badge => `<span class="chip">${badge}</span>`).join('');
 			
 			document.getElementById('personalDashboardModal').style.display = 'grid';
 		});

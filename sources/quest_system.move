@@ -3,7 +3,6 @@ module movehub::quest_system {
     use std::vector;
     use std::string::{Self, String};
     use aptos_framework::timestamp;
-    use aptos_framework::account;
     use aptos_framework::event;
 
     // Error codes
@@ -53,6 +52,7 @@ module movehub::quest_system {
     }
 
     // Events
+    #[event]
     struct QuestCompletedEvent has drop, store {
         user: address,
         quest_id: u64,
@@ -60,6 +60,7 @@ module movehub::quest_system {
         reward: u64,
     }
 
+    #[event]
     struct NewUserEvent has drop, store {
         user: address,
         timestamp: u64,
@@ -67,7 +68,7 @@ module movehub::quest_system {
 
     // Initialize the quest system (called once by admin)
     public entry fun initialize(admin: &signer) {
-        let admin_addr = signer::address_of(admin);
+        let _admin_addr = signer::address_of(admin);
         
         // Create initial quests
         let quests = vector::empty<Quest>();

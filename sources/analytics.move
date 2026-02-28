@@ -92,8 +92,9 @@ module movehub::analytics {
         while (vector::length(&progress.quests_completed_by_type) <= (quest_type as u64)) {
             vector::push_back(&mut progress.quests_completed_by_type, 0);
         };
-        let current_count = *vector::borrow(&progress.quests_completed_by_type, quest_type as u64);
-        vector::swap(&mut progress.quests_completed_by_type, quest_type as u64, current_count + 1);
+        let idx = quest_type as u64;
+        let current_count = *vector::borrow(&progress.quests_completed_by_type, idx);
+        *vector::borrow_mut(&mut progress.quests_completed_by_type, idx) = current_count + 1;
         
         let i = 0;
         let len = vector::length(&skills_learned);

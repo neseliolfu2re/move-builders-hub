@@ -48,9 +48,10 @@ app.get('/api/user-progress/:address', async (req, res) => {
   try {
     const { address } = req.params;
     
-    // Validate address format
-    if (!address || address.length !== 66) {
-      return res.status(400).json({ error: 'Invalid wallet address' });
+    // Validate Aptos address format: 0x + 2-64 hex chars (e.g. 0x1 or full 0x + 64 hex)
+    const aptosAddrRegex = /^0x[a-fA-F0-9]{2,64}$/;
+    if (!address || !aptosAddrRegex.test(address)) {
+      return res.status(400).json({ error: 'Invalid Aptos wallet address' });
     }
 
     const user = await db.collection('users').findOne({ walletAddress: address });
@@ -77,15 +78,15 @@ app.get('/api/user-progress/:address', async (req, res) => {
 // Complete quest
 app.post('/api/complete-quest', async (req, res) => {
   try {
-    const { walletAddress, questId, timestamp } = req.body;
+    const { walletAddress, questId, timestamp, txHash: clientTxHash } = req.body;
 
     // Validate input
     if (!walletAddress || !questId || !timestamp) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Simulate on-chain transaction
-    const txHash = await submitQuestToBlockchain(walletAddress, questId);
+    // Use client-provided txHash from wallet, or simulate
+    const txHash = clientTxHash || await submitQuestToBlockchain(walletAddress, questId);
 
     // Update user progress in database
     const questData = {
@@ -101,7 +102,8 @@ app.post('/api/complete-quest', async (req, res) => {
       { 
         $push: { quests: questData },
         $inc: { totalCompleted: 1 },
-        $set: { lastActive: new Date() }
+        $set: { lastActive: new Date() },
+        $setOnInsert: { joinedAt: new Date() }
       },
       { upsert: true }
     );
@@ -153,12 +155,23 @@ app.get('/api/analytics', async (req, res) => {
       }}
     ]).toArray();
 
+    // Real DAU: users active in last 24h
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const dailyActiveUsers = await db.collection('users').countDocuments({
+      lastActive: { $gte: oneDayAgo }
+    });
+    // Real weekly new users
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const weeklyNewUsers = await db.collection('users').countDocuments({
+      joinedAt: { $gte: oneWeekAgo }
+    });
+
     const analytics = {
       totalUsers: userCount,
       totalQuestsCompleted: stats?.totalQuestsCompleted || 0,
       totalTransactions: stats?.totalTransactions || 0,
-      dailyActiveUsers: Math.floor(Math.random() * 20) + 35, // Simulated
-      weeklyNewUsers: Math.floor(Math.random() * 10) + 8,   // Simulated
+      dailyActiveUsers,
+      weeklyNewUsers,
       recentActivity
     };
 

@@ -7,6 +7,8 @@ module movehub::rewards {
     use aptos_framework::account;
     use aptos_framework::timestamp;
     use aptos_framework::event::{Self, EventHandle};
+    use aptos_framework::coin;
+    use aptos_framework::aptos_coin::AptosCoin;
 
     const E_INSUFFICIENT_BALANCE: u64 = 100;
     const E_REWARD_NOT_FOUND: u64 = 101;
@@ -18,6 +20,7 @@ module movehub::rewards {
 
     const REWARD_STATUS_AVAILABLE: u8 = 1;
     const REWARD_STATUS_CLAIMED: u8 = 2;
+    const REWARD_STATUS_PAID: u8 = 3;
 
     struct Reward has key, store, copy, drop {
         id: u64,
@@ -76,6 +79,9 @@ module movehub::rewards {
     public entry fun sponsor_deposit(sponsor: &signer, amount: u64) acquires RewardsSystem {
         let sponsor_addr = signer::address_of(sponsor);
         let rewards_system = borrow_global_mut<RewardsSystem>(@movehub);
+        
+        // Transfer APT from sponsor to treasury (@movehub)
+        coin::transfer<AptosCoin>(sponsor, @movehub, amount);
         
         if (!table::contains(&rewards_system.sponsor_pools, sponsor_addr)) {
             let pool = SponsorPool {
@@ -139,6 +145,7 @@ module movehub::rewards {
         });
     }
 
+    /// Marks reward as claimed (recipient must call this first).
     public entry fun claim_reward(recipient: &signer, reward_id: u64) acquires RewardsSystem {
         let recipient_addr = signer::address_of(recipient);
         let rewards_system = borrow_global_mut<RewardsSystem>(@movehub);
@@ -156,6 +163,28 @@ module movehub::rewards {
             recipient: recipient_addr,
             amount: reward.amount,
         });
+    }
+
+    /// Admin processes the actual APT transfer to the recipient. Call after claim_reward.
+    public entry fun admin_process_payout(admin: &signer, reward_id: u64) acquires RewardsSystem {
+        let admin_addr = signer::address_of(admin);
+        let rewards_system = borrow_global_mut<RewardsSystem>(@movehub);
+        
+        assert!(admin_addr == rewards_system.admin, E_REWARD_NOT_FOUND);
+        assert!(table::contains(&rewards_system.rewards, reward_id), E_REWARD_NOT_FOUND);
+        
+        let reward = table::borrow(&rewards_system.rewards, reward_id);
+        assert!(reward.status == REWARD_STATUS_CLAIMED, E_REWARD_ALREADY_CLAIMED);
+        
+        let recipient = reward.recipient;
+        let amount = reward.amount;
+        
+        // Transfer APT from treasury (admin account) to recipient
+        coin::transfer<AptosCoin>(admin, recipient, amount);
+        
+        // Mark as paid to prevent double payout
+        let reward_mut = table::borrow_mut(&mut rewards_system.rewards, reward_id);
+        reward_mut.status = REWARD_STATUS_PAID;
     }
 
     public fun get_reward(reward_id: u64): Reward acquires RewardsSystem {

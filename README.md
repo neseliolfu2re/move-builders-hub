@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # 🏗️ Move Builders Hub
 
 **On-Chain Move Learning Platform**
@@ -99,6 +98,14 @@ cp env.example .env
 npm start
 ```
 
+### API Configuration (when frontend and backend are on different hosts)
+If your frontend is deployed separately (e.g. Vercel) and backend elsewhere, set the API base URL before the app loads:
+```html
+<script>window.MOVEHUB_API_BASE = 'https://your-api-url.com';</script>
+<script src="index.html"></script>
+```
+Or add a `config.js` that sets `window.MOVEHUB_API_BASE` and load it before the main script.
+
 ### Deploy Smart Contracts
 ```bash
 # Compile Move contracts
@@ -198,7 +205,3 @@ MIT License - See LICENSE file for details
 ---
 
 **Built with ❤️ for the Move ecosystem**
-=======
-# move-builders-hub
-On-Chain Move Learning Platform
->>>>>>> 2de0933124e7cca8bec46f10670efa2be56fa890

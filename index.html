@@ -73,6 +73,81 @@
 			.grid { grid-template-columns: repeat(3, 1fr); justify-items: stretch; }
 		}
 	</style>
+	<!-- Aptos Wallet Standard - replaces deprecated window.petra -->
+	<script type="module">
+		(async function() {
+			try {
+				const { getAptosWallets } = await import('https://esm.sh/@aptos-labs/wallet-standard@0.5.2');
+				let connectedWallet = null;
+				let currentAccount = null;
+
+				function getWallet() {
+					const { aptosWallets } = getAptosWallets();
+					return aptosWallets.find(w => w.name === 'Petra') || aptosWallets[0];
+				}
+
+				window.aptos = {
+					async connect() {
+						const wallet = getWallet();
+						if (!wallet) throw new Error('Petra wallet not detected. Please install from petra.app');
+						const connectFeature = wallet.features['aptos:connect'];
+						if (!connectFeature) throw new Error('Wallet does not support connect');
+						const account = await connectFeature.connect();
+						connectedWallet = wallet;
+						currentAccount = account;
+						const addr = account.address?.toString ? account.address.toString() : (account.address + '');
+						return { address: addr };
+					},
+					async disconnect() {
+						if (connectedWallet?.features['aptos:disconnect']) {
+							await connectedWallet.features['aptos:disconnect'].disconnect();
+						}
+						connectedWallet = null;
+						currentAccount = null;
+					},
+					async signAndSubmitTransaction(transaction) {
+						const wallet = connectedWallet || getWallet();
+						if (!wallet) throw new Error('Wallet not connected');
+						const signSubmit = wallet.features['aptos:signAndSubmitTransaction'];
+						const signOnly = wallet.features['aptos:signTransaction'];
+						if (signSubmit?.signAndSubmitTransaction) {
+							const result = await signSubmit.signAndSubmitTransaction(transaction);
+							return result?.hash ? result : { hash: result };
+						}
+						if (signOnly?.signTransaction) {
+							const { Aptos, AptosConfig, Network } = await import('https://esm.sh/@aptos-labs/ts-sdk@5');
+							const aptos = new Aptos(new AptosConfig({ network: Network.TESTNET }));
+							const input = { payload: transaction, sender: currentAccount?.address };
+							const { rawTransaction, authenticator } = await signOnly.signTransaction(input);
+							return await aptos.transaction.submit.simple({ transaction: rawTransaction, senderAuthenticator: authenticator });
+						}
+						throw new Error('Wallet does not support signAndSubmitTransaction');
+					},
+					async waitForTransaction(hash) {
+						const { Aptos, AptosConfig, Network } = await import('https://esm.sh/@aptos-labs/ts-sdk@5');
+						const client = new Aptos(new AptosConfig({ network: Network.TESTNET }));
+						return await client.waitForTransaction({ transactionHash: hash });
+					},
+					async network() {
+						const wallet = connectedWallet || getWallet();
+						if (!wallet?.features['aptos:network']) return { name: 'testnet' };
+						return await wallet.features['aptos:network'].network();
+					},
+					async switchNetwork(net) {
+						const wallet = connectedWallet || getWallet();
+						if (wallet?.features['aptos:changeNetwork']) {
+							await wallet.features['aptos:changeNetwork'].changeNetwork({ network: net });
+						}
+					}
+				};
+				window.aptosReady = true;
+			} catch (e) {
+				console.warn('Wallet Standard init failed:', e);
+				window.aptos = undefined;
+				window.aptosReady = false;
+			}
+		})();
+	</script>
 </head>
 <body>
 	<!-- Top Navigation with Wallet -->
@@ -1182,12 +1257,16 @@ public fun multiply(x: u64, y: u64): u64 {
 		async function connectWallet() {
 			console.log('🔗 Connect wallet clicked');
 			
-			// First check if Petra is available
-			console.log('🔍 window.aptos:', window.aptos);
+			// Wait for Wallet Standard to load (max 3 sec)
+			let waited = 0;
+			while (!window.aptos && waited < 3000) {
+				await new Promise(r => setTimeout(r, 100));
+				waited += 100;
+			}
 			
 			try {
 				if (!window.aptos) {
-					alert('❌ Petra wallet not detected!\n\nPlease:\n1. Install Petra extension\n2. Refresh the page\n3. Try again');
+					alert('❌ Petra wallet not detected!\n\nPlease:\n1. Install Petra extension from petra.app\n2. Refresh the page\n3. Try again');
 					window.open('https://petra.app/', '_blank');
 					return;
 				}
@@ -1631,12 +1710,18 @@ public fun multiply(x: u64, y: u64): u64 {
 		// Initialize everything
 		checkReferral();
 		
-		setTimeout(() => {
+		setTimeout(async () => {
+			let waited = 0;
+			while (!window.aptos && waited < 5000) {
+				await new Promise(r => setTimeout(r, 200));
+				waited += 200;
+			}
 			if (window.aptos) {
 				// Only show connect button if wallet is not connected
 				if (!walletConnected) {
 					document.getElementById('connectWallet').style.display = 'block';
 				}
+				document.getElementById('connectWallet').textContent = 'Connect Wallet';
 				console.log('✅ Petra wallet detected');
 			} else {
 				document.getElementById('connectWallet').style.display = 'block';
